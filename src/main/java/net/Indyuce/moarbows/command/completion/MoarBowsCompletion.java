@@ -35,6 +35,12 @@ public class MoarBowsCompletion implements TabCompleter {
 				Bukkit.getOnlinePlayers().forEach(online -> list.add(online.getName()));
 		}
 
+		else if (args.length ==4) {
+			if (args[0].equalsIgnoreCase("get"))
+				for (var i = 1; i < 6;i++)
+					list.add(String.valueOf(i));
+		}
+
 		return args[args.length - 1].isEmpty() ? list : list.stream().filter(string -> string.toLowerCase().startsWith(args[args.length - 1].toLowerCase())).collect(Collectors.toList());
 	}
 }
