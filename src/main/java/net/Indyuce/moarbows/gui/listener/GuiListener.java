@@ -12,6 +12,8 @@ public class GuiListener implements Listener {
     @EventHandler
     public void a(InventoryClickEvent event) {
         ItemStack item = event.getCurrentItem();
+        if (event.getClickedInventory() == null) return;
+
         if (event.getInventory().getHolder() instanceof PluginInventory
                 && event.getClickedInventory().equals(event.getInventory())
                 && UtilityMethods.isPluginItem(item, false)
