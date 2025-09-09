@@ -1,22 +1,21 @@
 package net.Indyuce.moarbows.bow.list;
 
-import org.bukkit.Particle;
+import net.Indyuce.moarbows.MoarBows;
+import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.bow.MoarBow;
+import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
+import net.Indyuce.moarbows.bow.particle.ParticleData;
+import net.Indyuce.moarbows.util.LinearFormula;
+import net.Indyuce.moarbows.version.VParticle;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
-import net.Indyuce.moarbows.MoarBows;
-import net.Indyuce.moarbows.bow.ArrowData;
-import net.Indyuce.moarbows.bow.MoarBow;
-import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
-import net.Indyuce.moarbows.bow.particle.ParticleData;
-import net.Indyuce.moarbows.util.LinearFormula;
-
 public class Gravity_Bow extends MoarBow {
 	public Gravity_Bow() {
-		super(new String[] { "Shoots arrows that attract", "your target to yourself." }, new ParticleData(Particle.SPELL_INSTANT),
+		super(new String[] { "Shoots arrows that attract", "your target to yourself." }, new ParticleData(VParticle.INSTANT_EFFECT.get()),
 				new String[] { "AIR,FISHING_ROD,AIR", "AIR,BOW,AIR", "AIR,AIR,AIR" });
 
 		addModifier(new DoubleModifier("cooldown", new LinearFormula(0, 0)), new DoubleModifier("force", new LinearFormula(2.5, .5)),
@@ -24,12 +23,12 @@ public class Gravity_Bow extends MoarBow {
 	}
 
 	@Override
-	public boolean canShoot(EntityShootBowEvent event, ArrowData data) {
+	public boolean canShoot(EntityShootBowEvent event, ArrowMetadata data) {
 		return true;
 	}
 
 	@Override
-	public void whenHit(EntityDamageByEntityEvent event, ArrowData data, Entity target) {
+	public void whenHit(EntityDamageByEntityEvent event, ArrowMetadata data, Entity target) {
 		double force = data.getDouble("force");
 		double ystatic = data.getDouble("y-static");
 		new BukkitRunnable() {
@@ -45,6 +44,6 @@ public class Gravity_Bow extends MoarBow {
 	}
 
 	@Override
-	public void whenLand(ArrowData data) {
+	public void whenLand(ArrowMetadata data) {
 	}
 }

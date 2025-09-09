@@ -1,11 +1,10 @@
 package net.Indyuce.moarbows.bow.modifier;
 
-import java.text.DecimalFormat;
-
-import org.apache.commons.lang.Validate;
+import net.Indyuce.moarbows.util.LinearFormula;
+import net.Indyuce.moarbows.util.lib.Validate;
 import org.bukkit.configuration.ConfigurationSection;
 
-import net.Indyuce.moarbows.util.LinearFormula;
+import java.text.DecimalFormat;
 
 public class DoubleModifier extends Modifier {
 	private LinearFormula value;

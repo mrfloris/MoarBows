@@ -58,17 +58,24 @@
     </build>
 
     <repositories>
+
+        <repository>
+            <id>phoenix</id>
+            <url>https://nexus.phoenixdevt.fr/repository/maven-public/</url>
+        </repository>
+
         <repository>
             <id>spigot-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
-        <repository>
-            <id>sk89q-repo</id>
-            <url>https://maven.enginehub.org/repo/</url>
-        </repository>
+
+
+
     </repositories>
 
     <dependencies>
+
+        <!-- Compile libs -->
 
         <dependency>
             <groupId>org.apache.maven.plugins</groupId>
@@ -77,6 +84,8 @@
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
+
+        <!-- Other -->
 
         <dependency>
             <groupId>org.spigotmc</groupId>
@@ -89,17 +98,20 @@
         <dependency>
             <groupId>com.sk89q.worldguard</groupId>
             <artifactId>worldguard-bukkit</artifactId>
-            <version>7.0.2-SNAPSHOT</version>
+            <version>7.0.12</version>
+            <classifier>dist</classifier>
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.sk89q.worldedit</groupId>
             <artifactId>worldedit-bukkit</artifactId>
-            <version>7.2.0</version>
+            <version>7.3.9-beta</version>
+            <classifier>dist</classifier>
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
+
     </dependencies>
 
 </project>

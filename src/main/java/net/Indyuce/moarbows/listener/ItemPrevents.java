@@ -1,5 +1,7 @@
 package net.Indyuce.moarbows.listener;
 
+import net.Indyuce.moarbows.MoarBows;
+import net.Indyuce.moarbows.util.UtilityMethods;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -7,9 +9,6 @@ import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
-
-import net.Indyuce.moarbows.BowUtils;
-import net.Indyuce.moarbows.MoarBows;
 
 public class ItemPrevents implements Listener {
 	@EventHandler
@@ -29,7 +28,7 @@ public class ItemPrevents implements Listener {
 			return;
 
 		ItemStack item = event.getItem();
-		if (!BowUtils.isPluginItem(item, false))
+		if (!UtilityMethods.isPluginItem(item, false))
 			return;
 
 		Player player = event.getEnchanter();
@@ -46,7 +45,7 @@ public class ItemPrevents implements Listener {
 			return;
 
 		ItemStack item = event.getCurrentItem();
-		if (!BowUtils.isPluginItem(item, false))
+		if (!UtilityMethods.isPluginItem(item, false))
 			return;
 
 		Player player = (Player) event.getWhoClicked();

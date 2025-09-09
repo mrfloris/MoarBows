@@ -1,6 +1,6 @@
 package net.Indyuce.moarbows.bow.particle;
 
-import org.apache.commons.lang.Validate;
+import net.Indyuce.moarbows.util.lib.Validate;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;

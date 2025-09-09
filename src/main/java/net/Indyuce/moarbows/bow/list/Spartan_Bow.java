@@ -1,8 +1,14 @@
 package net.Indyuce.moarbows.bow.list;
 
+import net.Indyuce.moarbows.MoarBows;
+import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.bow.MoarBow;
+import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
+import net.Indyuce.moarbows.bow.particle.ParticleData;
+import net.Indyuce.moarbows.util.LinearFormula;
+import net.Indyuce.moarbows.version.VParticle;
 import org.bukkit.Color;
 import org.bukkit.Location;
-import org.bukkit.Particle;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -10,34 +16,27 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import net.Indyuce.moarbows.MoarBows;
-import net.Indyuce.moarbows.bow.ArrowData;
-import net.Indyuce.moarbows.bow.MoarBow;
-import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
-import net.Indyuce.moarbows.bow.particle.ParticleData;
-import net.Indyuce.moarbows.util.LinearFormula;
-
 public class Spartan_Bow extends MoarBow {
 	public Spartan_Bow() {
 		super(new String[] { "Summons a flurry of arrows from", "the sky when hitting a target." },
-				new ParticleData(Particle.REDSTONE, Color.fromRGB(180, 180, 180), 2),
+				new ParticleData(VParticle.REDSTONE.get(), Color.fromRGB(180, 180, 180), 2),
 				new String[] { "BOW,EMERALD,BOW", "EMERALD,BOW,EMERALD", "BOW,EMERALD,BOW" });
 
 		addModifier(new DoubleModifier("cooldown", new LinearFormula(25, -3, 10, 25)), new DoubleModifier("duration", new LinearFormula(1.5, .5)));
 	}
 
 	@Override
-	public boolean canShoot(EntityShootBowEvent event, ArrowData data) {
+	public boolean canShoot(EntityShootBowEvent event, ArrowMetadata data) {
 		return true;
 	}
 
 	@Override
-	public void whenHit(EntityDamageByEntityEvent event, ArrowData data, Entity target) {
+	public void whenHit(EntityDamageByEntityEvent event, ArrowMetadata data, Entity target) {
 		whenLand(data);
 	}
 
 	@Override
-	public void whenLand(ArrowData data) {
+	public void whenLand(ArrowMetadata data) {
 		data.getArrow().remove();
 
 		final Location loc1 = data.getArrow().getLocation().clone();
@@ -51,7 +50,7 @@ public class Spartan_Bow extends MoarBow {
 				if ((ti += 3d / 20d) > duration)
 					cancel();
 
-				sky.getWorld().spawnParticle(Particle.SMOKE_LARGE, sky, 0);
+				sky.getWorld().spawnParticle(VParticle.LARGE_SMOKE.get(), sky, 0);
 				Arrow arrow1 = (Arrow) sky.getWorld().spawnEntity(sky, EntityType.ARROW);
 				// arrow1.setColor(Color.BLACK);
 

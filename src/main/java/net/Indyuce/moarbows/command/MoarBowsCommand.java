@@ -7,7 +7,7 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.hover.content.Text;
-import org.apache.commons.lang.Validate;
+import net.Indyuce.moarbows.util.lib.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -38,13 +38,13 @@ public class MoarBowsCommand implements CommandExecutor {
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "/mb " + ChatColor.WHITE + "shows the help page.");
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "/mb get <bow> (player) " + ChatColor.WHITE + "gives a bow to a player.");
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "/mb getall " + ChatColor.WHITE + "gives you all the available bows.");
-			sender.sendMessage(ChatColor.LIGHT_PURPLE + "/mb gui " + ChatColor.WHITE + "shows all available bows (GUI).");
+			sender.sendMessage(ChatColor.LIGHT_PURPLE + "/mb menu " + ChatColor.WHITE + "shows all available bows (GUI).");
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "/mb list " + ChatColor.WHITE + "shows all available bows.");
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "/mb reload " + ChatColor.WHITE + "reloads the config file.");
 			return true;
 		}
 
-		if (args[0].equalsIgnoreCase("gui")) {
+		if (args[0].equalsIgnoreCase("gui") || args[0].equalsIgnoreCase("menu")) {
 			if (!(sender instanceof Player)) {
 				sender.sendMessage(ChatColor.RED + "This command is for players only.");
 				return true;
@@ -144,7 +144,7 @@ public class MoarBowsCommand implements CommandExecutor {
 			if (args.length > 3)
 				try {
 					level = Integer.parseInt(args[3]);
-					Validate.isTrue(level > 0);
+					Validate.isTrue(level > 0, "Level must be positive.");
 				} catch (IllegalArgumentException exception) {
 					sender.sendMessage(ChatColor.RED + args[3] + " is not a valid number.");
 					return true;

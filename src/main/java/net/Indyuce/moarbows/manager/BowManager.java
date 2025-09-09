@@ -2,7 +2,7 @@ package net.Indyuce.moarbows.manager;
 
 import net.Indyuce.moarbows.MoarBows;
 import net.Indyuce.moarbows.bow.MoarBow;
-import org.apache.commons.lang.Validate;
+import net.Indyuce.moarbows.util.lib.Validate;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;

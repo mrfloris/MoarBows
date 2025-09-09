@@ -1,9 +1,13 @@
 package net.Indyuce.moarbows.gui;
 
-import net.Indyuce.moarbows.BowUtils;
 import net.Indyuce.moarbows.MoarBows;
 import net.Indyuce.moarbows.bow.MoarBow;
-import org.bukkit.*;
+import net.Indyuce.moarbows.util.UtilityMethods;
+import net.Indyuce.moarbows.version.Sounds;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
@@ -63,14 +67,14 @@ public class BowList extends PluginInventory {
     @Override
     public boolean whenClicked(InventoryClickEvent event) {
 
-        if (!BowUtils.isPluginItem(event.getCurrentItem(), false))
+        if (!UtilityMethods.isPluginItem(event.getCurrentItem(), false))
             return false;
 
         // Pagination
         ItemMeta meta = event.getCurrentItem().getItemMeta();
         if (meta.getPersistentDataContainer().has(INV_FUNCTION_NAMESPACED_KEY, PersistentDataType.STRING)) {
             String tag = meta.getPersistentDataContainer().get(INV_FUNCTION_NAMESPACED_KEY, PersistentDataType.STRING);
-            if (tag.equals("prev") && page > 0) {
+            if (tag.equals("prev") && page > 1) {
                 page--;
                 open();
                 return true;
@@ -86,7 +90,7 @@ public class BowList extends PluginInventory {
         }
 
         // Give Bow
-        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2);
+        player.getWorld().playSound(player.getLocation(), Sounds.BLOCK_NOTE_BLOCK_PLING, 1, 2);
         player.getInventory().addItem(event.getCurrentItem());
         return true;
     }

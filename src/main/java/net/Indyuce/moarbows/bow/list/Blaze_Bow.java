@@ -1,9 +1,16 @@
 package net.Indyuce.moarbows.bow.list;
 
+import net.Indyuce.moarbows.MoarBows;
+import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.bow.MoarBow;
+import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
+import net.Indyuce.moarbows.bow.particle.ParticleData;
+import net.Indyuce.moarbows.util.LinearFormula;
+import net.Indyuce.moarbows.util.UtilityMethods;
+import net.Indyuce.moarbows.version.Sounds;
+import net.Indyuce.moarbows.version.VParticle;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -12,18 +19,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
-import net.Indyuce.moarbows.BowUtils;
-import net.Indyuce.moarbows.MoarBows;
-import net.Indyuce.moarbows.bow.ArrowData;
-import net.Indyuce.moarbows.bow.MoarBow;
-import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
-import net.Indyuce.moarbows.bow.particle.ParticleData;
-import net.Indyuce.moarbows.util.LinearFormula;
-
 public class Blaze_Bow extends MoarBow {
 	public Blaze_Bow() {
 		super(new String[] { "Shoots a long ranged firebolt that", "deals &c{damage} &7damage to the first entity it",
-				"hits, igniting him for &c{duration} &7seconds." }, new ParticleData(Particle.FLAME),
+				"hits, igniting him for &c{duration} &7seconds." }, new ParticleData(VParticle.FLAME.get()),
 				new String[] { "MAGMA_CREAM,MAGMA_CREAM,MAGMA_CREAM", "MAGMA_CREAM,BOW,MAGMA_CREAM", "MAGMA_CREAM,MAGMA_CREAM,MAGMA_CREAM" });
 
 		addModifier(new DoubleModifier("cooldown", new LinearFormula(10, -1, 3, 10)), new DoubleModifier("damage", new LinearFormula(8, 2)),
@@ -31,11 +30,11 @@ public class Blaze_Bow extends MoarBow {
 	}
 
 	@Override
-	public boolean canShoot(EntityShootBowEvent event, ArrowData data) {
+	public boolean canShoot(EntityShootBowEvent event, ArrowMetadata data) {
 		event.setCancelled(true);
-		final double dmg = data.getDouble("damage") * BowUtils.getPowerDamageMultiplier(data.getSource());
+		final double dmg = data.getDouble("damage") * UtilityMethods.getPowerDamageMultiplier(data.getSource());
 		final double duration = data.getDouble("duration");
-		if (!BowUtils.consumeAmmo(data.getShooter(), new ItemStack(Material.ARROW)))
+		if (!UtilityMethods.consumeAmmo(data.getShooter(), new ItemStack(Material.ARROW)))
 			return false;
 
 		new BukkitRunnable() {
@@ -47,11 +46,11 @@ public class Blaze_Bow extends MoarBow {
 				for (double j = 0; j < 3; j++) {
 					ti += .5;
 					loc.add(v);
-					loc.getWorld().spawnParticle(Particle.FLAME, loc, 8, .1, .1, .1, 0);
-					loc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, loc, 0);
-					loc.getWorld().playSound(loc, Sound.BLOCK_NOTE_BLOCK_HAT, 3, 2);
+					loc.getWorld().spawnParticle(VParticle.FLAME.get(), loc, 8, .1, .1, .1, 0);
+					loc.getWorld().spawnParticle(VParticle.SMOKE.get(), loc, 0);
+					loc.getWorld().playSound(loc, Sounds.BLOCK_NOTE_BLOCK_HAT, 3, 2);
 					for (LivingEntity entity : loc.getWorld().getEntitiesByClass(LivingEntity.class))
-						if (BowUtils.canTarget(data.getShooter(), loc, entity) && !entity.equals(data.getShooter())) {
+						if (UtilityMethods.canTarget(data.getShooter(), loc, entity) && !entity.equals(data.getShooter())) {
 							new BukkitRunnable() {
 								final Location loc2 = entity.getLocation();
 								double y = 0;
@@ -61,7 +60,7 @@ public class Blaze_Bow extends MoarBow {
 										y += .05;
 										for (int j = 0; j < 2; j++) {
 											double xz = y * Math.PI * .8 + (j * Math.PI);
-											loc.getWorld().spawnParticle(Particle.FLAME, loc2.clone().add(Math.cos(xz) * 1.3, y, Math.sin(xz) * 1.3),
+											loc.getWorld().spawnParticle(VParticle.FLAME.get(), loc2.clone().add(Math.cos(xz) * 1.3, y, Math.sin(xz) * 1.3),
 													0);
 
 										}
@@ -70,8 +69,8 @@ public class Blaze_Bow extends MoarBow {
 										cancel();
 								}
 							}.runTaskTimer(MoarBows.plugin, 0, 1);
-							entity.getWorld().playSound(entity.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 3, 0);
-							loc.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, entity.getLocation().add(0, 1, 0), 0);
+							entity.getWorld().playSound(entity.getLocation(), Sounds.ENTITY_FIREWORK_ROCKET_BLAST, 3, 0);
+							loc.getWorld().spawnParticle(VParticle.LARGE_EXPLOSION.get(), entity.getLocation().add(0, 1, 0), 0);
 							cancel();
 							entity.damage(dmg, data.getShooter());
 							entity.setFireTicks((int) (duration * 20));
@@ -86,10 +85,10 @@ public class Blaze_Bow extends MoarBow {
 	}
 
 	@Override
-	public void whenHit(EntityDamageByEntityEvent event, ArrowData data, Entity target) {
+	public void whenHit(EntityDamageByEntityEvent event, ArrowMetadata data, Entity target) {
 	}
 
 	@Override
-	public void whenLand(ArrowData data) {
+	public void whenLand(ArrowMetadata data) {
 	}
 }

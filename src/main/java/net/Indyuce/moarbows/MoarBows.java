@@ -1,6 +1,5 @@
 package net.Indyuce.moarbows;
 
-import net.Indyuce.moarbows.player.PlayerData;
 import net.Indyuce.moarbows.bow.MoarBow;
 import net.Indyuce.moarbows.command.MoarBowsCommand;
 import net.Indyuce.moarbows.command.completion.MoarBowsCompletion;
@@ -12,9 +11,12 @@ import net.Indyuce.moarbows.listener.*;
 import net.Indyuce.moarbows.manager.ArrowManager;
 import net.Indyuce.moarbows.manager.BowManager;
 import net.Indyuce.moarbows.manager.ConfigManager;
+import net.Indyuce.moarbows.player.PlayerData;
+import net.Indyuce.moarbows.util.UtilityMethods;
+import net.Indyuce.moarbows.util.lib.Metrics;
+import net.Indyuce.moarbows.version.ServerVersion;
 import net.Indyuce.moarbows.version.SpigotPlugin;
-import org.apache.commons.lang.Validate;
-import org.bstats.bukkit.Metrics;
+import net.Indyuce.moarbows.util.lib.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -33,11 +35,25 @@ public class MoarBows extends JavaPlugin {
     private final BowManager bowManager = new BowManager();
     private final ArrowManager arrowManager = new ArrowManager();
 
+
+    private ServerVersion version;
     private WGPlugin wgPlugin;
     private ConfigManager language;
 
     public void onLoad() {
         plugin = this;
+        getLogger().log(Level.INFO, "Plugin file is called '" + getFile().getName() + "'");
+
+        try {
+            version = new ServerVersion();
+            getLogger().log(Level.INFO, "Detected Bukkit Version: " + version.getCraftBukkitVersion());
+        } catch (Exception exception) {
+            getLogger().log(Level.WARNING, "Internal error:");
+            exception.printStackTrace();
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
+
         wgPlugin = getServer().getPluginManager().getPlugin("WorldGuard") != null ? new WorldGuardOn() : new WorldGuardOff();
     }
 
@@ -46,12 +62,12 @@ public class MoarBows extends JavaPlugin {
 
         new SpigotPlugin(36387, this).checkForUpdate();
 
-        new Metrics(this);
+        new Metrics(this, 3406);
 
         saveDefaultConfig();
         language = new ConfigManager();
 
-        Bukkit.getServer().getPluginManager().registerEvents(new BowUtils(), this);
+        Bukkit.getServer().getPluginManager().registerEvents(new UtilityMethods(), this);
         Bukkit.getServer().getPluginManager().registerEvents(new GuiListener(), this);
 
         Bukkit.getServer().getPluginManager().registerEvents(new ShootBow(), this);
@@ -123,6 +139,10 @@ public class MoarBows extends JavaPlugin {
 
     public WGPlugin getWorldGuard() {
         return wgPlugin;
+    }
+
+    public ServerVersion getVersion() {
+        return version;
     }
 
     public void reloadPlugin() {

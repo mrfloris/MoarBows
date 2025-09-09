@@ -1,21 +1,20 @@
 package net.Indyuce.moarbows.bow.list;
 
+import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.bow.MoarBow;
+import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
+import net.Indyuce.moarbows.bow.particle.ParticleData;
+import net.Indyuce.moarbows.util.LinearFormula;
+import net.Indyuce.moarbows.version.VParticle;
 import org.bukkit.Effect;
-import org.bukkit.Particle;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 
-import net.Indyuce.moarbows.bow.ArrowData;
-import net.Indyuce.moarbows.bow.MoarBow;
-import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
-import net.Indyuce.moarbows.bow.particle.ParticleData;
-import net.Indyuce.moarbows.util.LinearFormula;
-
 public class Silver_Bow extends MoarBow {
 	public Silver_Bow() {
-		super(new String[] { "Arrows deal &c{extra}% &7additional damage." }, new ParticleData(Particle.CRIT),
+		super(new String[] { "Arrows deal &c{extra}% &7additional damage." }, new ParticleData(VParticle.CRIT.get()),
 				new String[] { "IRON_INGOT,IRON_INGOT,IRON_INGOT", "IRON_INGOT,BOW,IRON_INGOT", "IRON_INGOT,IRON_INGOT,IRON_INGOT" });
 
 		addModifier(new DoubleModifier("cooldown", new LinearFormula(0, 0)), new DoubleModifier("extra", new LinearFormula(40, 30)),
@@ -23,12 +22,12 @@ public class Silver_Bow extends MoarBow {
 	}
 
 	@Override
-	public boolean canShoot(EntityShootBowEvent event, ArrowData data) {
+	public boolean canShoot(EntityShootBowEvent event, ArrowMetadata data) {
 		return true;
 	}
 
 	@Override
-	public void whenHit(EntityDamageByEntityEvent event, ArrowData data, Entity target) {
+	public void whenHit(EntityDamageByEntityEvent event, ArrowMetadata data, Entity target) {
 		if (!(target instanceof LivingEntity))
 			return;
 
@@ -39,6 +38,6 @@ public class Silver_Bow extends MoarBow {
 	}
 
 	@Override
-	public void whenLand(ArrowData data) {
+	public void whenLand(ArrowMetadata data) {
 	}
 }

@@ -3,7 +3,7 @@ version: ${project.version}
 main: net.Indyuce.moarbows.MoarBows
 author: Indyuce
 softdepend: [ WorldGuard ]
-api-version: 1.13
+api-version: 1.14
 commands:
   moarbows:
     description: Main command.

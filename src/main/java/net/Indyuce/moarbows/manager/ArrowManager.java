@@ -1,7 +1,7 @@
 package net.Indyuce.moarbows.manager;
 
-import net.Indyuce.moarbows.BowUtils;
-import net.Indyuce.moarbows.bow.ArrowData;
+import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.util.UtilityMethods;
 import org.bukkit.entity.Arrow;
 
 import java.util.Collection;
@@ -10,9 +10,9 @@ import java.util.Map;
 import java.util.Optional;
 
 public class ArrowManager {
-    private final Map<Integer, ArrowData> map = new HashMap<>();
+    private final Map<Integer, ArrowMetadata> map = new HashMap<>();
 
-    public void registerArrow(ArrowData data) {
+    public void registerArrow(ArrowMetadata data) {
         map.put(data.getArrow().getEntityId(), data);
     }
 
@@ -20,8 +20,23 @@ public class ArrowManager {
         map.remove(arrow.getEntityId());
     }
 
-    public Collection<ArrowData> getActive() {
+    public Collection<ArrowMetadata> getActive() {
         return map.values();
+    }
+
+    public Optional<ArrowMetadata> getArrowData(Arrow arrow) {
+        return map.containsKey(arrow.getEntityId()) ? Optional.of(map.get(arrow.getEntityId())) : Optional.empty();
+    }
+
+    public void flushArrowData() {
+        UtilityMethods.clean(map.values(), arrow -> arrow.hasTimedOut());
+    }
+
+    //region Deprecated
+
+    @Deprecated
+    public ArrowMetadata safeGetArrowData(Arrow arrow) {
+        return map.getOrDefault(arrow.getEntityId(), null);
     }
 
     @Deprecated
@@ -29,16 +44,5 @@ public class ArrowManager {
         return map.containsKey(arrow.getEntityId());
     }
 
-    public Optional<ArrowData> getArrowData(Arrow arrow) {
-        return map.containsKey(arrow.getEntityId()) ? Optional.of(map.get(arrow.getEntityId())) : Optional.empty();
-    }
-
-    @Deprecated
-    public ArrowData safeGetArrowData(Arrow arrow) {
-        return map.containsKey(arrow.getEntityId()) ? map.get(arrow.getEntityId()) : null;
-    }
-
-    public void flushArrowData() {
-        BowUtils.clean(map.values(), arrow -> arrow.hasTimedOut());
-    }
+    //endregion
 }

@@ -1,14 +1,13 @@
 package net.Indyuce.moarbows.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.logging.Level;
-
+import net.Indyuce.moarbows.MoarBows;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 
-import net.Indyuce.moarbows.MoarBows;
+import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
 
 public class ConfigFile {
 	private final Plugin plugin;

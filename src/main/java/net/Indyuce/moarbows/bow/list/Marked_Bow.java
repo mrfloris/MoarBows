@@ -1,13 +1,18 @@
 package net.Indyuce.moarbows.bow.list;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import net.Indyuce.moarbows.MoarBows;
+import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.bow.MoarBow;
+import net.Indyuce.moarbows.bow.modifier.BooleanModifier;
+import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
+import net.Indyuce.moarbows.bow.particle.ParticleData;
+import net.Indyuce.moarbows.util.LinearFormula;
+import net.Indyuce.moarbows.version.Sounds;
+import net.Indyuce.moarbows.version.VParticle;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -17,20 +22,15 @@ import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import net.Indyuce.moarbows.MoarBows;
-import net.Indyuce.moarbows.bow.ArrowData;
-import net.Indyuce.moarbows.bow.MoarBow;
-import net.Indyuce.moarbows.bow.modifier.BooleanModifier;
-import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
-import net.Indyuce.moarbows.bow.particle.ParticleData;
-import net.Indyuce.moarbows.util.LinearFormula;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Marked_Bow extends MoarBow implements Listener {
 	private static final Map<Integer, Mark> marked = new HashMap<>();
 
 	public Marked_Bow() {
 		super(new String[] { "Arrows mark players. Hitting a", "marked player deals &c{extra}% &7additional", "damage. Milk dispels the mark." },
-				new ParticleData(Particle.SPELL_WITCH), new String[] { "COAL,COAL,COAL", "COAL,BOW,COAL", "COAL,COAL,COAL" });
+				new ParticleData(VParticle.WITCH.get()), new String[] { "COAL,COAL,COAL", "COAL,BOW,COAL", "COAL,COAL,COAL" });
 
 		addModifier(new DoubleModifier("cooldown", new LinearFormula(10, -1, 3, 10)), new DoubleModifier("extra", new LinearFormula(40, 20)),
 				new DoubleModifier("duration", new LinearFormula(6, 1)), new BooleanModifier("particles", true));
@@ -45,23 +45,23 @@ public class Marked_Bow extends MoarBow implements Listener {
 	}
 
 	@Override
-	public boolean canShoot(EntityShootBowEvent event, ArrowData data) {
+	public boolean canShoot(EntityShootBowEvent event, ArrowMetadata data) {
 		return true;
 	}
 
 	@Override
-	public void whenHit(EntityDamageByEntityEvent event, ArrowData data, Entity target) {
+	public void whenHit(EntityDamageByEntityEvent event, ArrowMetadata data, Entity target) {
 
 		if (isMarked(target))
 			return;
 
 		playEffect(target.getLocation());
 		new Mark(target, data.getDouble("extra"), data.getDouble("duration"));
-		target.getWorld().playSound(target.getLocation(), Sound.ENTITY_ENDERMAN_HURT, 2, 1.5f);
+		target.getWorld().playSound(target.getLocation(), Sounds.ENTITY_ENDERMAN_HURT, 2, 1.5f);
 	}
 
 	@Override
-	public void whenLand(ArrowData data) {
+	public void whenLand(ArrowMetadata data) {
 		// TODO Auto-generated method stub
 
 	}
@@ -74,7 +74,7 @@ public class Marked_Bow extends MoarBow implements Listener {
 				for (int j1 = 0; j1 < 3; j1++) {
 					y += .07;
 					for (int j = 0; j < 3; j++)
-						loc.getWorld().spawnParticle(Particle.REDSTONE, loc.clone().add(Math.cos(y * Math.PI + (j * Math.PI * 2 / 3)) * (3 - y) / 2.5,
+						loc.getWorld().spawnParticle(VParticle.REDSTONE.get(), loc.clone().add(Math.cos(y * Math.PI + (j * Math.PI * 2 / 3)) * (3 - y) / 2.5,
 								y, Math.sin(y * Math.PI + (j * Math.PI * 2 / 3)) * (3 - y) / 2.5), 0, new Particle.DustOptions(Color.BLACK, 1));
 				}
 				if (y > 3)
@@ -103,14 +103,14 @@ public class Marked_Bow extends MoarBow implements Listener {
 			if (event.getEntity().equals(entity)) {
 				event.setDamage(event.getDamage() * coef);
 				playEffect(entity.getLocation());
-				entity.getWorld().playSound(entity.getLocation(), Sound.ENTITY_ENDERMAN_DEATH, 2, 2);
+				entity.getWorld().playSound(entity.getLocation(), Sounds.ENTITY_ENDERMAN_DEATH, 2, 2);
 			}
 		}
 
 		@EventHandler
 		public void b(PlayerItemConsumeEvent event) {
 			if (event.getPlayer().equals(entity)) {
-				entity.getWorld().playSound(entity.getLocation(), Sound.ENTITY_BLAZE_AMBIENT, 2, 2);
+				entity.getWorld().playSound(entity.getLocation(), Sounds.ENTITY_BLAZE_AMBIENT, 2, 2);
 				close();
 			}
 		}
@@ -131,7 +131,7 @@ public class Marked_Bow extends MoarBow implements Listener {
 		@Override
 		public void run() {
 			for (double j = 0; j < Math.PI * 2; j += Math.PI / 18)
-				entity.getWorld().spawnParticle(Particle.SMOKE_NORMAL, entity.getLocation().clone().add(Math.cos(j) * .7, .1, Math.sin(j) * .7), 0);
+				entity.getWorld().spawnParticle(VParticle.SMOKE.get(), entity.getLocation().clone().add(Math.cos(j) * .7, .1, Math.sin(j) * .7), 0);
 		}
 	}
 }

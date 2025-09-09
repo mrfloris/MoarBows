@@ -1,6 +1,6 @@
 package net.Indyuce.moarbows.gui;
 
-import org.antlr.v4.runtime.misc.NotNull;
+import net.Indyuce.moarbows.util.lib.NotNull;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;

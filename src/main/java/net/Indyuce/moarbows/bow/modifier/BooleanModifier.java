@@ -1,6 +1,6 @@
 package net.Indyuce.moarbows.bow.modifier;
 
-import org.apache.commons.lang.Validate;
+import net.Indyuce.moarbows.util.lib.Validate;
 import org.bukkit.configuration.ConfigurationSection;
 
 public class BooleanModifier extends Modifier {

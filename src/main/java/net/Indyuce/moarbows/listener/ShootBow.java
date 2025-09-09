@@ -1,7 +1,12 @@
 package net.Indyuce.moarbows.listener;
 
-import java.text.DecimalFormat;
-
+import net.Indyuce.moarbows.MoarBows;
+import net.Indyuce.moarbows.api.event.MoarBowShootEvent;
+import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.bow.MoarBow;
+import net.Indyuce.moarbows.bow.particle.ArrowParticles;
+import net.Indyuce.moarbows.comp.worldguard.CustomFlag;
+import net.Indyuce.moarbows.player.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
@@ -10,13 +15,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.inventory.ItemStack;
 
-import net.Indyuce.moarbows.MoarBows;
-import net.Indyuce.moarbows.bow.ArrowData;
-import net.Indyuce.moarbows.bow.MoarBow;
-import net.Indyuce.moarbows.player.PlayerData;
-import net.Indyuce.moarbows.api.event.MoarBowShootEvent;
-import net.Indyuce.moarbows.bow.particle.ArrowParticles;
-import net.Indyuce.moarbows.comp.worldguard.CustomFlag;
+import java.text.DecimalFormat;
 
 public class ShootBow implements Listener {
 	private static final DecimalFormat cooldownFormat = new DecimalFormat("0.#");
@@ -61,14 +60,14 @@ public class ShootBow implements Listener {
 		/*
 		 * cooldown check
 		 */
-		ArrowData arrowData = event.getEntity() instanceof Player
-				? new ArrowData(bow, PlayerData.get((Player) event.getEntity()), (Arrow) event.getProjectile(), item)
-				: new ArrowData(bow, event.getEntity(), (Arrow) event.getProjectile(), item);
-		if (arrowData.hasPlayer()) {
+		ArrowMetadata arrowMetadata = event.getEntity() instanceof Player
+				? new ArrowMetadata(bow, PlayerData.get((Player) event.getEntity()), (Arrow) event.getProjectile(), item)
+				: new ArrowMetadata(bow, event.getEntity(), (Arrow) event.getProjectile(), item);
+		if (arrowMetadata.hasPlayer()) {
 			Player player = (Player) event.getEntity();
-			if (arrowData.getPlayerData().hasCooldown(arrowData.getBow(), arrowData.getLevel())) {
+			if (arrowMetadata.getPlayerData().hasCooldown(arrowMetadata.getBow(), arrowMetadata.getLevel())) {
 				player.sendMessage(MoarBows.plugin.getLanguage().formatMessage("on-cooldown", "left",
-						cooldownFormat.format(arrowData.getPlayerData().getRemainingCooldown(bow, arrowData.getLevel()))));
+						cooldownFormat.format(arrowMetadata.getPlayerData().getRemainingCooldown(bow, arrowMetadata.getLevel()))));
 				event.setCancelled(true);
 				return;
 			}
@@ -77,18 +76,18 @@ public class ShootBow implements Listener {
 		/*
 		 * bukkit event
 		 */
-		MoarBowShootEvent bowEvent = new MoarBowShootEvent(arrowData);
+		MoarBowShootEvent bowEvent = new MoarBowShootEvent(arrowMetadata);
 		Bukkit.getPluginManager().callEvent(bowEvent);
 		if (bowEvent.isCancelled())
 			return;
 
-		if (arrowData.hasPlayer())
-			arrowData.getPlayerData().applyCooldown(bow);
+		if (arrowMetadata.hasPlayer())
+			arrowMetadata.getPlayerData().applyCooldown(bow);
 
 		/*
 		 * shoot effect
 		 */
-		if (!bow.canShoot(event, arrowData)) {
+		if (!bow.canShoot(event, arrowMetadata)) {
 			event.setCancelled(true);
 			return;
 		}
@@ -96,12 +95,12 @@ public class ShootBow implements Listener {
 		/*
 		 * register arrow data
 		 */
-		MoarBows.plugin.getArrowManager().registerArrow(arrowData);
+		MoarBows.plugin.getArrowManager().registerArrow(arrowMetadata);
 
 		/*
 		 * arrow particles if enabled
 		 */
 		if (MoarBows.plugin.getConfig().getBoolean("arrow-particles"))
-			new ArrowParticles(bow, arrowData.getArrow()).runTaskTimer(MoarBows.plugin, 0, 1);
+			new ArrowParticles(bow, arrowMetadata.getArrow()).runTaskTimer(MoarBows.plugin, 0, 1);
 	}
 }

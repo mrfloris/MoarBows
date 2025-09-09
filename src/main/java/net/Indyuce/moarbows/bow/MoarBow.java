@@ -28,6 +28,8 @@ public abstract class MoarBow {
     private String[] craft;
     private List<String> lore;
     private int customModelData;
+    private String customModelDataString; // TODO
+    private NamespacedKey itemModel; // TODO
     private ParticleData particles;
     private boolean craftEnabled;
 
@@ -62,29 +64,29 @@ public abstract class MoarBow {
      * @param data  Generated arrow data
      * @return If the player is allowed to fire the bow.
      */
-    public abstract boolean canShoot(EntityShootBowEvent event, ArrowData data);
+    public abstract boolean canShoot(EntityShootBowEvent event, ArrowMetadata data);
 
     /**
      * When an arrow fired by that bow hits another entity. Does NOT
      * get called when the arrow lands on the ground/on a block.
      * <p>
-     * For bows like the Fire Bow that method does the same as {@link #whenLand(ArrowData)}
+     * For bows like the Fire Bow that method does the same as {@link #whenLand(ArrowMetadata)}
      *
      * @param event  The bukkit damage event
      * @param data   Generated arrow data
      * @param target The entity being hit (same as {@link EntityDamageByEntityEvent#getEntity()}
      */
-    public abstract void whenHit(EntityDamageByEntityEvent event, ArrowData data, Entity target);
+    public abstract void whenHit(EntityDamageByEntityEvent event, ArrowMetadata data, Entity target);
 
     /**
      * When an arrow fired by that bow lands on the ground. Does NOT get
      * called when the arrow hits another entity.
      * <p>
-     * For bows like the Fire Bow that method does the same as {@link #whenHit(EntityDamageByEntityEvent, ArrowData, Entity)}
+     * For bows like the Fire Bow that method does the same as {@link #whenHit(EntityDamageByEntityEvent, ArrowMetadata, Entity)}
      *
      * @param data Generated arrow data
      */
-    public abstract void whenLand(ArrowData data);
+    public abstract void whenLand(ArrowMetadata data);
 
     public String getId() {
         return id;
@@ -168,6 +170,8 @@ public abstract class MoarBow {
             throw new IllegalArgumentException("Could not load bow particle effect: " + exception.getMessage());
         }
         customModelData = config.getInt("custom-model-data");
+        customModelDataString = config.getString("custom-model-data-string");
+        itemModel = config.contains("item-model") ? NamespacedKey.fromString(config.getString("item-model")) : null;
         craft = config.getStringList("craft").toArray(new String[0]);
         craftEnabled = config.getBoolean("craft-enabled");
 

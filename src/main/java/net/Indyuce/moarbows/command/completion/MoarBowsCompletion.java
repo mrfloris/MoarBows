@@ -1,15 +1,14 @@
 package net.Indyuce.moarbows.command.completion;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
+import net.Indyuce.moarbows.MoarBows;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 
-import net.Indyuce.moarbows.MoarBows;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class MoarBowsCompletion implements TabCompleter {
 	@Override
@@ -22,7 +21,7 @@ public class MoarBowsCompletion implements TabCompleter {
 		if (args.length == 1) {
 			list.add("get");
 			list.add("getall");
-			list.add("gui");
+			list.add("menu");
 			list.add("list");
 			list.add("reload");
 			list.add("equip");

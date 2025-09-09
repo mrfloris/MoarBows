@@ -1,16 +1,15 @@
 package net.Indyuce.moarbows.manager;
 
+import net.Indyuce.moarbows.MoarBows;
+import net.Indyuce.moarbows.bow.MoarBow;
+import net.Indyuce.moarbows.util.ConfigFile;
+import org.bukkit.ChatColor;
+import org.bukkit.configuration.file.FileConfiguration;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.logging.Level;
-
-import org.bukkit.ChatColor;
-import org.bukkit.configuration.file.FileConfiguration;
-
-import net.Indyuce.moarbows.MoarBows;
-import net.Indyuce.moarbows.bow.MoarBow;
-import net.Indyuce.moarbows.util.ConfigFile;
 
 public class ConfigManager {
 

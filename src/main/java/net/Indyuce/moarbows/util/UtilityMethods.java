@@ -1,10 +1,12 @@
-package net.Indyuce.moarbows;
+package net.Indyuce.moarbows.util;
 
+import net.Indyuce.moarbows.MoarBows;
+import net.Indyuce.moarbows.util.lib.NotNull;
+import net.Indyuce.moarbows.version.VEnchantment;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -13,11 +15,16 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 
+import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
-public class BowUtils implements Listener {
+public class UtilityMethods implements Listener {
     public static String caseOnWords(String str) {
         StringBuilder builder = new StringBuilder(str);
         boolean isLastSpace = true;
@@ -32,6 +39,29 @@ public class BowUtils implements Listener {
                 isLastSpace = true;
         }
         return builder.toString();
+    }
+
+    @NotNull
+    public static <T> T resolveField(@NotNull Function<String, T> resolver, @NotNull String... candidates) {
+        return resolveField(resolver, null, candidates);
+    }
+
+    @NotNull
+    public static <T> T resolveField(@NotNull Function<String, T> resolver, @Nullable Supplier<T> defaultValue, @NotNull String... candidates) {
+
+        // Try all candidates
+        for (String candidate : candidates)
+            try {
+                return Objects.requireNonNull(resolver.apply(candidate), "Null supplied value");
+            } catch (Throwable throwable) {
+                // Ignore & try next candidate
+            }
+
+        // Default value if any
+        if (defaultValue != null) return Objects.requireNonNull(defaultValue.get(), "Null supplied default value");
+
+        // Error otherwise
+        throw new IllegalArgumentException("Could not find enum field given candidates " + Arrays.asList(candidates));
     }
 
     public static boolean consumeAmmo(LivingEntity entity, ItemStack ammo) {
@@ -62,9 +92,10 @@ public class BowUtils implements Listener {
         return item.hasItemMeta() ? item.getItemMeta().getPersistentDataContainer().get(new NamespacedKey(MoarBows.plugin, "MoarBowLevel"), PersistentDataType.INTEGER) : 0;
     }
 
-    public static double getPowerDamageMultiplier(ItemStack item) {
-        return item == null || item.getType() == Material.AIR || !item.hasItemMeta() || !item.getItemMeta().hasEnchant(Enchantment.ARROW_DAMAGE) ? 1
-                : 1 + .25 * (item.getItemMeta().getEnchantLevel(Enchantment.ARROW_DAMAGE) + 1);
+    public static double getPowerDamageMultiplier(@NotNull ItemStack item) {
+        var powerEnchant = VEnchantment.POWER.get();
+        return item == null || item.getType() == Material.AIR || !item.hasItemMeta() || !item.getItemMeta().hasEnchant(powerEnchant) ? 1
+                : 1 + .25 * (item.getItemMeta().getEnchantLevel(powerEnchant) + 1);
     }
 
     public static boolean canTarget(LivingEntity shooter, Location loc, Entity target) {

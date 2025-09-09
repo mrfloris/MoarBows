@@ -1,11 +1,10 @@
 package net.Indyuce.moarbows.util;
 
+import net.Indyuce.moarbows.MoarBows;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Entity;
 import org.bukkit.scheduler.BukkitRunnable;
-
-import net.Indyuce.moarbows.MoarBows;
 
 public class SmallParticleEffect extends BukkitRunnable {
 	private final Location loc;

@@ -1,15 +1,14 @@
 package net.Indyuce.moarbows.listener;
 
-import java.util.Optional;
-
+import net.Indyuce.moarbows.MoarBows;
+import net.Indyuce.moarbows.bow.ArrowMetadata;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
-import net.Indyuce.moarbows.MoarBows;
-import net.Indyuce.moarbows.bow.ArrowData;
+import java.util.Optional;
 
 public class HitEntity implements Listener {
 
@@ -19,11 +18,11 @@ public class HitEntity implements Listener {
 			return;
 
 		Arrow arrow = (Arrow) event.getDamager();
-		Optional<ArrowData> opt = MoarBows.plugin.getArrowManager().getArrowData(arrow);
+		Optional<ArrowMetadata> opt = MoarBows.plugin.getArrowManager().getArrowData(arrow);
 		if (!opt.isPresent())
 			return;
 
-		ArrowData data = opt.get();
+		ArrowMetadata data = opt.get();
 		data.getBow().whenHit(event, data, event.getEntity());
 		MoarBows.plugin.getArrowManager().unregisterArrow(arrow);
 	}

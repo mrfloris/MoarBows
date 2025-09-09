@@ -1,27 +1,26 @@
 package net.Indyuce.moarbows.api.event;
 
+import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.bow.MoarBow;
 import org.bukkit.entity.Arrow;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.entity.EntityEvent;
 
-import net.Indyuce.moarbows.bow.ArrowData;
-import net.Indyuce.moarbows.bow.MoarBow;
-
 public class MoarBowShootEvent extends EntityEvent implements Cancellable {
 	private static final HandlerList handlers = new HandlerList();
 
-	private final ArrowData arrow;
+	private final ArrowMetadata arrow;
 
 	private boolean cancelled = false;
 
-	public MoarBowShootEvent(ArrowData arrow) {
+	public MoarBowShootEvent(ArrowMetadata arrow) {
 		super(arrow.getShooter());
 
 		this.arrow = arrow;
 	}
 
-	public ArrowData getArrowData() {
+	public ArrowMetadata getArrowData() {
 		return arrow;
 	}
 

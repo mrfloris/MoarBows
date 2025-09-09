@@ -1,9 +1,9 @@
 package net.Indyuce.moarbows.player;
 
-import net.Indyuce.moarbows.bow.MoarBow;
 import net.Indyuce.moarbows.MoarBows;
+import net.Indyuce.moarbows.bow.MoarBow;
 import net.Indyuce.moarbows.bow.particle.ParticleData.ParticleRunnable;
-import org.antlr.v4.runtime.misc.NotNull;
+import net.Indyuce.moarbows.util.lib.NotNull;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;

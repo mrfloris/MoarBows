@@ -1,11 +1,5 @@
 package net.Indyuce.moarbows.comp.worldguard;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.bukkit.Location;
-import org.bukkit.entity.Player;
-
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
@@ -13,8 +7,12 @@ import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.flags.Flags;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
-
 import net.Indyuce.moarbows.MoarBows;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class WorldGuardOn implements WGPlugin {
 	private final WorldGuard worldguard;

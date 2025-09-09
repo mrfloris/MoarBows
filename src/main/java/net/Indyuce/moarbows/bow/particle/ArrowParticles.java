@@ -1,10 +1,9 @@
 package net.Indyuce.moarbows.bow.particle;
 
+import net.Indyuce.moarbows.bow.MoarBow;
 import org.bukkit.entity.Arrow;
 import org.bukkit.event.Listener;
 import org.bukkit.scheduler.BukkitRunnable;
-
-import net.Indyuce.moarbows.bow.MoarBow;
 
 public class ArrowParticles extends BukkitRunnable implements Listener {
 	private final Arrow arrow;

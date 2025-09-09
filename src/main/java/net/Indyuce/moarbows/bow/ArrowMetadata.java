@@ -1,12 +1,12 @@
 package net.Indyuce.moarbows.bow;
 
-import net.Indyuce.moarbows.BowUtils;
 import net.Indyuce.moarbows.player.PlayerData;
+import net.Indyuce.moarbows.util.UtilityMethods;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 
-public class ArrowData {
+public class ArrowMetadata {
 	private final MoarBow bow;
 	private final PlayerData playerData;
 	private final Arrow arrow;
@@ -24,27 +24,27 @@ public class ArrowData {
 	/**
 	 * When a non-player entity uses the bow
 	 */
-	public ArrowData(MoarBow bow, LivingEntity shooter, Arrow arrow, ItemStack source) {
+	public ArrowMetadata(MoarBow bow, LivingEntity shooter, Arrow arrow, ItemStack source) {
 		this.bow = bow;
 		this.playerData = null;
 		this.shooter = shooter;
 		this.arrow = arrow;
 
 		this.source = source;
-		this.level = BowUtils.getBowLevel(source);
+		this.level = UtilityMethods.getBowLevel(source);
 	}
 
 	/**
 	 * When a player uses the bow
 	 */
-	public ArrowData(MoarBow bow, PlayerData playerData, Arrow arrow, ItemStack source) {
+	public ArrowMetadata(MoarBow bow, PlayerData playerData, Arrow arrow, ItemStack source) {
 		this.bow = bow;
 		this.playerData = playerData;
 		this.shooter = playerData.getPlayer();
 		this.arrow = arrow;
 
 		this.source = source;
-		this.level = BowUtils.getBowLevel(source);
+		this.level = UtilityMethods.getBowLevel(source);
 	}
 
 	public MoarBow getBow() {
