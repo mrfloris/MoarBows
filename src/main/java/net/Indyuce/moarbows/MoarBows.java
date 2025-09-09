@@ -6,17 +6,15 @@ import net.Indyuce.moarbows.command.completion.MoarBowsCompletion;
 import net.Indyuce.moarbows.comp.worldguard.WGPlugin;
 import net.Indyuce.moarbows.comp.worldguard.WorldGuardOff;
 import net.Indyuce.moarbows.comp.worldguard.WorldGuardOn;
-import net.Indyuce.moarbows.gui.listener.GuiListener;
 import net.Indyuce.moarbows.listener.*;
 import net.Indyuce.moarbows.manager.ArrowManager;
 import net.Indyuce.moarbows.manager.BowManager;
 import net.Indyuce.moarbows.manager.ConfigManager;
 import net.Indyuce.moarbows.player.PlayerData;
-import net.Indyuce.moarbows.util.UtilityMethods;
 import net.Indyuce.moarbows.util.lib.Metrics;
+import net.Indyuce.moarbows.util.lib.Validate;
 import net.Indyuce.moarbows.version.ServerVersion;
 import net.Indyuce.moarbows.version.SpigotPlugin;
-import net.Indyuce.moarbows.util.lib.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -66,9 +64,6 @@ public class MoarBows extends JavaPlugin {
 
         saveDefaultConfig();
         language = new ConfigManager();
-
-        Bukkit.getServer().getPluginManager().registerEvents(new UtilityMethods(), this);
-        Bukkit.getServer().getPluginManager().registerEvents(new GuiListener(), this);
 
         Bukkit.getServer().getPluginManager().registerEvents(new ShootBow(), this);
         Bukkit.getServer().getPluginManager().registerEvents(new ItemPrevents(), this);

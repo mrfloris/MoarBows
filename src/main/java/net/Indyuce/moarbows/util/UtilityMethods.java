@@ -3,14 +3,10 @@ package net.Indyuce.moarbows.util;
 import net.Indyuce.moarbows.MoarBows;
 import net.Indyuce.moarbows.util.lib.NotNull;
 import net.Indyuce.moarbows.version.VEnchantment;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
+import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
@@ -24,7 +20,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class UtilityMethods implements Listener {
+public class UtilityMethods {
     public static String caseOnWords(String str) {
         StringBuilder builder = new StringBuilder(str);
         boolean isLastSpace = true;

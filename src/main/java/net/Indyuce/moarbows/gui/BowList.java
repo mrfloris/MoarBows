@@ -3,14 +3,20 @@ package net.Indyuce.moarbows.gui;
 import net.Indyuce.moarbows.MoarBows;
 import net.Indyuce.moarbows.bow.MoarBow;
 import net.Indyuce.moarbows.util.UtilityMethods;
+import net.Indyuce.moarbows.util.lib.Validate;
 import net.Indyuce.moarbows.version.Sounds;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -18,7 +24,8 @@ import org.bukkit.persistence.PersistentDataType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BowList extends PluginInventory {
+public class BowList implements InventoryHolder, Listener {
+    private final Player player;
     private final List<MoarBow> bows = new ArrayList<>();
     private final int maxPage;
 
@@ -26,10 +33,10 @@ public class BowList extends PluginInventory {
 
     private static final int[] SLOTS = {00, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43};
     private static final int BOWS_PER_PAGE = SLOTS.length;
-    private static final NamespacedKey INV_FUNCTION_NAMESPACED_KEY = new NamespacedKey(MoarBows.plugin, "InventoryFunction");
+    private static final NamespacedKey INV_FUNCTION_NAMESPACED_KEY = new NamespacedKey(MoarBows.plugin, "inv_function");
 
     public BowList(Player player) {
-        super(player);
+        this.player = player;
 
         bows.addAll(MoarBows.plugin.getBowManager().getBows());
         maxPage = Math.max((int) Math.ceil(bows.size() / BOWS_PER_PAGE), 1);
@@ -64,9 +71,17 @@ public class BowList extends PluginInventory {
         return inv;
     }
 
-    @Override
-    public boolean whenClicked(InventoryClickEvent event) {
+    private boolean open;
 
+    public void open() {
+        Validate.isTrue(!open, "Inventory already opened");
+        this.open = true;
+
+        player.openInventory(getInventory());
+        Bukkit.getPluginManager().registerEvents(this, MoarBows.plugin);
+    }
+
+    public boolean whenClicked(InventoryClickEvent event) {
         if (!UtilityMethods.isPluginItem(event.getCurrentItem(), false))
             return false;
 
@@ -95,7 +110,32 @@ public class BowList extends PluginInventory {
         return true;
     }
 
-    private int getAvailableSlot(Inventory inv) {
+    private boolean closed;
+
+    public void close() {
+        Validate.isTrue(!closed, "Inventory already closed");
+
+        this.closed = true;
+
+        HandlerList.unregisterAll(this);
+    }
+
+    @EventHandler
+    public void onClose(InventoryCloseEvent event) {
+        if (!event.getPlayer().equals(player)) return;
+
+        close();
+    }
+
+    @EventHandler
+    public void registerClicks(InventoryClickEvent event) {
+        if (!event.getWhoClicked().equals(player)) return;
+
+        if (this.whenClicked(event))
+            event.setCancelled(true);
+    }
+
+    private static int getAvailableSlot(Inventory inv) {
         Integer[] slots = new Integer[]{10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42,
                 43};
         for (int available : slots)
