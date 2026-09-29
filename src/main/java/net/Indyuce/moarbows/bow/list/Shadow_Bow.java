@@ -18,7 +18,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
+import net.Indyuce.moarbows.bow.effect.EffectTask;
 import org.bukkit.util.Vector;
 
 public class Shadow_Bow extends MoarBow {
@@ -30,31 +30,37 @@ public class Shadow_Bow extends MoarBow {
 		addModifier(new DoubleModifier("cooldown", new LinearFormula(10, -1, 3, 10)), new DoubleModifier("damage", new LinearFormula(8, 4)));
 	}
 
+    @Override
+    public boolean usesVanillaArrow() {
+        return false;
+    }
+
 	@Override
 	public boolean canShoot(EntityShootBowEvent event, ArrowMetadata data) {
-		event.setCancelled(true);
 		final double damage = data.getDouble("damage") * UtilityMethods.getPowerDamageMultiplier(data.getSource());
-		if (!UtilityMethods.consumeAmmo(data.getShooter(), new ItemStack(Material.ARROW)))
-			return false;
 
-		new BukkitRunnable() {
+		new EffectTask(data) {
 			Location loc = data.getShooter().getEyeLocation();
 			double ti = 0;
 			Vector v = data.getShooter().getEyeLocation().getDirection().multiply(1.25);
 
-			public void run() {
+			public void tick() {
 				for (double j = 0; j < 3; j++) {
 					ti += .5;
 					loc.add(v);
+                    if (!loc.getWorld().isChunkLoaded(loc.getBlockX() >> 4, loc.getBlockZ() >> 4) || loc.getBlock().getType().isSolid()) {
+                        cancel();
+                        return;
+                    }
 					loc.getWorld().spawnParticle(VParticle.WITCH.get(), loc, 8, .1, .1, .1, 0);
 					loc.getWorld().playSound(loc, Sounds.ENTITY_ENDERMAN_HURT, 3, 2);
-					for (LivingEntity entity : loc.getWorld().getEntitiesByClass(LivingEntity.class))
+					for (LivingEntity entity : loc.getWorld().getNearbyLivingEntities(loc, 2))
 						if (UtilityMethods.canTarget(data.getShooter(), loc, entity)) {
-							new BukkitRunnable() {
+							new EffectTask(data) {
 								final Location loc2 = entity.getLocation();
 								double y = 0;
 
-								public void run() {
+								public void tick() {
 									for (int item = 0; item < 2; item++) {
 										y += .05;
 										for (int j = 0; j < 2; j++) {
@@ -72,7 +78,7 @@ public class Shadow_Bow extends MoarBow {
 							loc.getWorld().playSound(entity.getLocation(), Sounds.ENTITY_FIREWORK_ROCKET_BLAST, 3, 0);
 							loc.getWorld().spawnParticle(VParticle.WITCH.get(), entity.getLocation().add(0, 1, 0), 0);
 							cancel();
-							entity.damage(damage, entity);
+							entity.damage(damage, data.getShooter());
 							return;
 						}
 				}

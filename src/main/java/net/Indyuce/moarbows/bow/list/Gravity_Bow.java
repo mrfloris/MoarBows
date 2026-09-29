@@ -2,6 +2,8 @@ package net.Indyuce.moarbows.bow.list;
 
 import net.Indyuce.moarbows.MoarBows;
 import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.bow.effect.EffectDamage;
+import net.Indyuce.moarbows.util.UtilityMethods;
 import net.Indyuce.moarbows.bow.MoarBow;
 import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
 import net.Indyuce.moarbows.bow.particle.ParticleData;
@@ -10,7 +12,7 @@ import net.Indyuce.moarbows.version.VParticle;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
-import org.bukkit.scheduler.BukkitRunnable;
+import net.Indyuce.moarbows.bow.effect.EffectTask;
 import org.bukkit.util.Vector;
 
 public class Gravity_Bow extends MoarBow {
@@ -31,14 +33,17 @@ public class Gravity_Bow extends MoarBow {
 	public void whenHit(EntityDamageByEntityEvent event, ArrowMetadata data, Entity target) {
 		double force = data.getDouble("force");
 		double ystatic = data.getDouble("y-static");
-		new BukkitRunnable() {
-			public void run() {
-				Vector v = data.getShooter().getLocation().toVector().subtract(target.getLocation().toVector()).normalize();
+		new EffectTask(data) {
+			public void tick() {
+				if (!UtilityMethods.canTarget(data.getShooter(), null, target)) return;
+                Vector v = data.getShooter().getLocation().toVector().subtract(target.getLocation().toVector());
+                if (v.lengthSquared() < 0.0001) return;
+                v.normalize();
 				v.setX(v.getX() * force);
 				v.setY(ystatic);
 				v.setZ(v.getZ() * force);
 
-				target.setVelocity(v);
+				EffectDamage.push(target, data.getShooter(), v);
 			}
 		}.runTaskLater(MoarBows.plugin, 1);
 	}

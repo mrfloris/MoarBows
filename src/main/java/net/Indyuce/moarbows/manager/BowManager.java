@@ -1,23 +1,23 @@
 package net.Indyuce.moarbows.manager;
 
-import net.Indyuce.moarbows.MoarBows;
 import net.Indyuce.moarbows.bow.MoarBow;
+import net.Indyuce.moarbows.bow.list.*;
 import net.Indyuce.moarbows.util.lib.Validate;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
+import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 public class BowManager {
+    // Preserve the normalized keys used by older Bukkit releases. Names and lore
+    // are presentation only and are never used to identify a custom bow.
+    public static final NamespacedKey BOW_KEY = new NamespacedKey("moarbows", "moarbow");
+    public static final NamespacedKey LEVEL_KEY = new NamespacedKey("moarbows", "moarbowlevel");
 
     /**
      * Bows are registered in this map using their bow
@@ -42,21 +42,35 @@ public class BowManager {
     public void stopRegistration() {
         Validate.isTrue(registration, "Bow registration is disabled");
 
-        // Load default bows
-        try {
-            JarFile file = new JarFile(MoarBows.plugin.getJarFile());
-            for (Enumeration<JarEntry> entryEnum = file.entries(); entryEnum.hasMoreElements(); ) {
-                JarEntry entry = entryEnum.nextElement();
-                String name = entry.getName().replace("/", ".");
-
-                // Check for real & non anonymous classes
-                if (name.endsWith(".class") && !name.contains("$") && name.startsWith("net.Indyuce.moarbows.bow.list."))
-                    register((MoarBow) Class.forName(name.substring(0, name.length() - 6)).getDeclaredConstructor().newInstance());
-            }
-            file.close();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | IOException | NoSuchMethodException | InvocationTargetException exception) {
-            exception.printStackTrace();
-        }
+        // An explicit catalogue avoids scanning our JAR on the server thread.
+        register(new Autobow());
+        register(new Blaze_Bow());
+        register(new Chicken_Bow());
+        register(new Composite_Bow());
+        register(new Corona_Bow());
+        register(new Corrosive_Bow());
+        register(new Cupidons_Bow());
+        register(new Earthquake_Bow());
+        register(new Explosive_Bow());
+        register(new Fire_Bow());
+        register(new Gravity_Bow());
+        register(new Hunter_Bow());
+        register(new Ice_Bow());
+        register(new Laser_Bow());
+        register(new Lightning_Bowlt());
+        register(new Linear_Bow());
+        register(new Marked_Bow());
+        register(new Meteor_Bow());
+        register(new Pulsar_Bow());
+        register(new Railgun_Bow());
+        register(new Shadow_Bow());
+        register(new Shocking_Bow());
+        register(new Silver_Bow());
+        register(new Snow_Bow());
+        register(new Spartan_Bow());
+        register(new Trippple_Bow());
+        register(new Void_Bow());
+        register(new Wither_Bow());
 
         registration = false;
     }
@@ -76,10 +90,41 @@ public class BowManager {
 
     @Nullable
     public MoarBow get(ItemStack item) {
-        if (item == null || !item.hasItemMeta())
+        if (item == null || item.getType() != Material.BOW || item.getAmount() != 1)
             return null;
 
-        String tag = item.getItemMeta().getPersistentDataContainer().get(new NamespacedKey(MoarBows.plugin, "MoarBow"), PersistentDataType.STRING);
+        var data = item.getPersistentDataContainer();
+        if (!data.has(BOW_KEY, PersistentDataType.STRING)
+                || (data.has(LEVEL_KEY) && !data.has(LEVEL_KEY, PersistentDataType.INTEGER)))
+            return null;
+        Integer level = data.get(LEVEL_KEY, PersistentDataType.INTEGER);
+        if (level != null && level < 1)
+            return null;
+        String tag = data.get(BOW_KEY, PersistentDataType.STRING);
         return map.get(tag);
+    }
+
+    public int getLevel(ItemStack item) {
+        if (get(item) == null)
+            return 0;
+        return item.getPersistentDataContainer().getOrDefault(LEVEL_KEY, PersistentDataType.INTEGER, 1);
+    }
+
+    /** Explicit administrator attestation of an old bow, preserving all other item data. */
+    public ItemStack migrate(ItemStack original, MoarBow bow, int level) {
+        Validate.isTrue(original != null && original.getType() == Material.BOW && original.getAmount() == 1,
+                "Hold exactly one bow to migrate.");
+        Validate.isTrue(bow != null && map.get(bow.getId()) == bow && level > 0, "Unknown bow or invalid level.");
+        var data = original.getPersistentDataContainer();
+        if (data.has(BOW_KEY) || data.has(LEVEL_KEY)) {
+            Validate.isTrue(get(original) == bow && getLevel(original) == level,
+                    "Existing bow identity or level differs, or its tags are malformed. No changes were made.");
+        }
+        ItemStack migrated = original.clone();
+        migrated.editPersistentDataContainer(pdc -> {
+            pdc.set(BOW_KEY, PersistentDataType.STRING, bow.getId());
+            pdc.set(LEVEL_KEY, PersistentDataType.INTEGER, level);
+        });
+        return migrated;
     }
 }

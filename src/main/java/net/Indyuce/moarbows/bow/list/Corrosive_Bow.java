@@ -1,6 +1,7 @@
 package net.Indyuce.moarbows.bow.list;
 
 import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.util.UtilityMethods;
 import net.Indyuce.moarbows.bow.MoarBow;
 import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
 import net.Indyuce.moarbows.bow.particle.ParticleData;
@@ -36,11 +37,11 @@ public class Corrosive_Bow extends MoarBow {
 	public void whenLand(ArrowMetadata data) {
 		int duration = (int) (data.getDouble("duration") * 20);
 		data.getArrow().remove();
-		data.getArrow().getWorld().spawnParticle(VParticle.SLIME.get(), data.getArrow().getLocation(), 48, 2, 2, 2);
-		data.getArrow().getWorld().spawnParticle(VParticle.HAPPY_VILLAGER.get(), data.getArrow().getLocation(), 32, 2, 2, 2);
-		data.getArrow().getWorld().playSound(data.getArrow().getLocation(), Sounds.BLOCK_BREWING_STAND_BREW, 3, 0);
-		for (Entity ent : data.getArrow().getNearbyEntities(5, 5, 5))
-			if (ent instanceof LivingEntity) {
+		data.getArrow().getWorld().spawnParticle(VParticle.SLIME.get(), data.getImpactLocation(), 48, 2, 2, 2);
+		data.getArrow().getWorld().spawnParticle(VParticle.HAPPY_VILLAGER.get(), data.getImpactLocation(), 32, 2, 2, 2);
+		data.getArrow().getWorld().playSound(data.getImpactLocation(), Sounds.BLOCK_BREWING_STAND_BREW, 3, 0);
+		for (Entity ent : data.getNearbyEntities(5, 5, 5))
+			if (ent instanceof LivingEntity && UtilityMethods.canTarget(data.getShooter(), null, ent)) {
 				((LivingEntity) ent).removePotionEffect(PotionEffectType.POISON);
 				((LivingEntity) ent).addPotionEffect(new PotionEffect(PotionEffectType.POISON, duration, 1));
 			}

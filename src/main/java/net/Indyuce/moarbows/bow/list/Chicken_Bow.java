@@ -17,7 +17,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
+import net.Indyuce.moarbows.bow.effect.EffectTask;
 
 public class Chicken_Bow extends MoarBow {
 	public Chicken_Bow() {
@@ -27,13 +27,17 @@ public class Chicken_Bow extends MoarBow {
 		addModifier(new DoubleModifier("cooldown", new LinearFormula(3, 0)));
 	}
 
+    @Override
+    public boolean usesVanillaArrow() {
+        return false;
+    }
+
 	@Override
 	public boolean canShoot(EntityShootBowEvent event, ArrowMetadata data) {
-		event.setCancelled(true);
-		new BukkitRunnable() {
+		new EffectTask(data) {
 			int ti = 0;
 
-			public void run() {
+			public void tick() {
 				if (ti++ > 20 * event.getForce() || !UtilityMethods.consumeAmmo(data.getShooter(), new ItemStack(Material.EGG))) {
 					cancel();
 					return;
@@ -43,7 +47,7 @@ public class Chicken_Bow extends MoarBow {
 				loc.getWorld().spawnParticle(VParticle.CRIT.get(), loc, 6, .2, .2, .2, 0);
 				data.getShooter().getWorld().playSound(data.getShooter().getLocation(), Sounds.ENTITY_EGG_THROW, 1, 1.5f);
 
-				Egg egg = data.getShooter().launchProjectile(Egg.class);
+				Egg egg = net.Indyuce.moarbows.MoarBows.plugin.getArrowManager().trackEffect(data.getShooter().launchProjectile(Egg.class), data);
 				loc.setPitch(loc.getPitch() + random.nextInt(3) - 1);
 				loc.setYaw(loc.getYaw() + random.nextInt(3) - 1);
 				egg.setVelocity(loc.getDirection().multiply(3.3 * event.getForce()));

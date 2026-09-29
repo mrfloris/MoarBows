@@ -4,10 +4,14 @@ import net.Indyuce.moarbows.util.UtilityMethods;
 import net.Indyuce.moarbows.util.lib.NotNull;
 import org.bukkit.Sound;
 
-import java.lang.reflect.Method;
-import java.util.function.Function;
 
 public class Sounds {
+    private static final java.util.Map<String, Sound> BY_NAME = new java.util.HashMap<>();
+    static {
+        for (Sound sound : org.bukkit.Registry.SOUND_EVENT)
+            BY_NAME.put(org.bukkit.Registry.SOUND_EVENT.getKey(sound).getKey().replace('.', '_').toUpperCase(java.util.Locale.ROOT), sound);
+    }
+
     public static final Sound
             ENTITY_ENDERMAN_HURT = fromName("ENTITY_ENDERMAN_HURT", "ENTITY_ENDERMEN_HURT"),
             ENTITY_ENDERMAN_DEATH = fromName("ENTITY_ENDERMAN_DEATH", "ENTITY_ENDERMEN_DEATH"),
@@ -58,26 +62,6 @@ public class Sounds {
 
     @NotNull
     public static Sound fromName(String... candidates) {
-        return UtilityMethods.resolveField(getResolver(), candidates);
-    }
-
-    private static Function<String, Sound> RESOLVER;
-
-    private static Function<String, Sound> getResolver() {
-        if (RESOLVER == null)
-            try {
-                Method method = Sound.class.getDeclaredMethod("valueOf", String.class);
-                RESOLVER = str -> {
-                    try {
-                        return (Sound) method.invoke(null, str);
-                    } catch (Exception exception) {
-                        throw new RuntimeException(exception);
-                    }
-                };
-            } catch (Exception exception) {
-                throw new RuntimeException("Reflection error: " + exception.getMessage());
-            }
-
-        return RESOLVER;
+        return UtilityMethods.resolveField(BY_NAME::get, candidates);
     }
 }

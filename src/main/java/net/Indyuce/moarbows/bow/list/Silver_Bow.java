@@ -26,15 +26,19 @@ public class Silver_Bow extends MoarBow {
 		return true;
 	}
 
+    @Override
+    public void modifyHit(EntityDamageByEntityEvent event, ArrowMetadata data, Entity target) {
+        if (target instanceof LivingEntity) event.setDamage(event.getDamage() * (1. + data.getDouble("extra") / 100.));
+    }
+
 	@Override
 	public void whenHit(EntityDamageByEntityEvent event, ArrowMetadata data, Entity target) {
 		if (!(target instanceof LivingEntity))
 			return;
 
-		int id = (int) data.getDouble("block-effect-id");
-		data.getShooter().getWorld().playEffect(data.getShooter().getLocation(), Effect.STEP_SOUND, id);
-		data.getShooter().getWorld().playEffect(data.getShooter().getLocation().add(0, 1, 0), Effect.STEP_SOUND, id);
-		event.setDamage(event.getDamage() * (1. + data.getDouble("extra") / 100.));
+		// The legacy numeric block-effect-id is retained in config; modern Paper requires BlockData.
+        org.bukkit.block.data.BlockData block = org.bukkit.Material.SAND.createBlockData();
+		target.getWorld().spawnParticle(org.bukkit.Particle.BLOCK, target.getLocation(), 12, .3, .3, .3, block);
 	}
 
 	@Override

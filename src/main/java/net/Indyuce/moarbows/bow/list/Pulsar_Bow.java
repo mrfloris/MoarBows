@@ -2,6 +2,8 @@ package net.Indyuce.moarbows.bow.list;
 
 import net.Indyuce.moarbows.MoarBows;
 import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.bow.effect.EffectDamage;
+import net.Indyuce.moarbows.util.UtilityMethods;
 import net.Indyuce.moarbows.bow.MoarBow;
 import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
 import net.Indyuce.moarbows.bow.particle.ParticleData;
@@ -14,7 +16,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
-import org.bukkit.scheduler.BukkitRunnable;
+import net.Indyuce.moarbows.bow.effect.EffectTask;
 import org.bukkit.util.Vector;
 
 public class Pulsar_Bow extends MoarBow {
@@ -39,13 +41,13 @@ public class Pulsar_Bow extends MoarBow {
 	public void whenLand(ArrowMetadata data) {
 		double duration = data.getDouble("duration") * 20;
 		data.getArrow().remove();
-		data.getArrow().getWorld().playSound(data.getArrow().getLocation(), Sounds.ENTITY_ENDERMAN_TELEPORT, 3, 1);
-		new BukkitRunnable() {
+		data.getArrow().getWorld().playSound(data.getImpactLocation(), Sounds.ENTITY_ENDERMAN_TELEPORT, 3, 1);
+		new EffectTask(data) {
 			int ti = 0;
 			double r = 4;
-			final Location loc = data.getArrow().getLocation().clone();
+			final Location loc = data.getImpactLocation().clone();
 
-			public void run() {
+			public void tick() {
 				ti++;
 				loc.getWorld().playSound(loc, Sounds.BLOCK_NOTE_BLOCK_HAT, 2, 2);
 				loc.getWorld().spawnParticle(VParticle.LARGE_EXPLOSION.get(), loc, 0);
@@ -58,11 +60,10 @@ public class Pulsar_Bow extends MoarBow {
 					Vector v = loc.toVector().subtract(loc1.toVector());
 					loc.getWorld().spawnParticle(VParticle.LARGE_SMOKE.get(), loc1, 0, v.getX(), v.getY(), v.getZ(), .1);
 				}
-				for (Entity target : data.getArrow().getNearbyEntities(5, 5, 5))
-					if (target instanceof LivingEntity) {
-						target.playEffect(EntityEffect.HURT);
-						target.setVelocity(
-								data.getArrow().getLocation().toVector().subtract(target.getLocation().toVector()).normalize().multiply(.5));
+				for (Entity target : data.getNearbyEntities(5, 5, 5))
+					if (target instanceof LivingEntity && UtilityMethods.canTarget(data.getShooter(), null, target)) {
+						Vector pull = loc.toVector().subtract(target.getLocation().toVector());
+                        if (pull.lengthSquared() > 0.0001) EffectDamage.push(target, data.getShooter(), pull.normalize().multiply(.5));
 					}
 				if (ti > duration)
 					cancel();

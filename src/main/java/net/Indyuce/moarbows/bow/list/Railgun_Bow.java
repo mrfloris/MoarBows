@@ -32,6 +32,6 @@ public class Railgun_Bow extends MoarBow {
     @Override
     public void whenLand(ArrowMetadata data) {
         data.getArrow().remove();
-        data.getArrow().getWorld().createExplosion(data.getArrow().getLocation(), (float) data.getDouble("radius"));
+        net.Indyuce.moarbows.MoarBows.plugin.getArrowManager().createExplosion(data, (float) data.getDouble("radius"));
     }
 }

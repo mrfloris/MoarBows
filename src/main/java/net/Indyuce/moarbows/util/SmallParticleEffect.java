@@ -26,8 +26,10 @@ public class SmallParticleEffect extends BukkitRunnable {
 	}
 
 	public void run() {
-		if (t > Math.PI * 2)
-			cancel();
+		if (t > Math.PI * 2 || !loc.getWorld().isChunkLoaded(loc.getBlockX() >> 4, loc.getBlockZ() >> 4)) {
+            cancel();
+            return;
+        }
 
 		for (int k = 0; k < 3; k++) {
 			t += Math.PI / 10;

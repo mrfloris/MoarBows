@@ -35,11 +35,11 @@ public class Void_Bow extends MoarBow {
     @Override
     public void whenLand(ArrowMetadata data) {
         data.getArrow().remove();
-        Location loc = data.getArrow().getLocation();
-        loc.setPitch(((Player) data.getArrow().getShooter()).getLocation().getPitch());
-        loc.setYaw(((Player) data.getArrow().getShooter()).getLocation().getYaw());
+        Location loc = data.getImpactLocation();
+        loc.setPitch(data.getShooter().getLocation().getPitch());
+        loc.setYaw(data.getShooter().getLocation().getYaw());
         data.getShooter().teleport(loc);
         loc.getWorld().spawnParticle(VParticle.LARGE_EXPLOSION.get(), loc, 0);
-        data.getArrow().getWorld().playSound(data.getArrow().getLocation(), Sounds.ENTITY_ENDERMAN_TELEPORT, 3, 1);
+        data.getArrow().getWorld().playSound(data.getImpactLocation(), Sounds.ENTITY_ENDERMAN_TELEPORT, 3, 1);
     }
 }

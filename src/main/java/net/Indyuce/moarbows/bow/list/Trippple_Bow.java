@@ -25,17 +25,21 @@ public class Trippple_Bow extends MoarBow {
 		addModifier(new DoubleModifier("cooldown", new LinearFormula(2.5, 0)));
 	}
 
+    @Override
+    public boolean usesVanillaArrow() {
+        return false;
+    }
+
 	@Override
 	public boolean canShoot(EntityShootBowEvent event, ArrowMetadata data) {
-		event.setCancelled(true);
 		data.getShooter().getWorld().playSound(data.getShooter().getLocation(), Sounds.ENTITY_ARROW_SHOOT, 2, 1);
 		Location loc = data.getShooter().getLocation().add(0, 1.2, 0);
 		for (int j = -1; j < 2; j++) {
-			if (!UtilityMethods.consumeAmmo(data.getShooter(), new ItemStack(Material.ARROW)))
+			if (j > -1 && !UtilityMethods.consumeAmmo(data.getShooter(), new ItemStack(Material.ARROW)))
 				return false;
 
 			loc.setYaw(data.getShooter().getLocation().getYaw() + j);
-			data.getShooter().launchProjectile(Arrow.class).setVelocity(loc.getDirection().multiply(event.getForce() * 3.3));
+			net.Indyuce.moarbows.bow.effect.ProjectileEffects.arrow(data).setVelocity(loc.getDirection().multiply(event.getForce() * 3.3));
 		}
 		return true;
 	}

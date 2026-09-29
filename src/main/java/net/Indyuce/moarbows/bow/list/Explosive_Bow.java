@@ -1,6 +1,7 @@
 package net.Indyuce.moarbows.bow.list;
 
 import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.util.UtilityMethods;
 import net.Indyuce.moarbows.bow.MoarBow;
 import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
 import net.Indyuce.moarbows.bow.particle.ParticleData;
@@ -34,11 +35,11 @@ public class Explosive_Bow extends MoarBow {
 	public void whenLand(ArrowMetadata data) {
 		double dmg = data.getDouble("damage");
 		data.getArrow().remove();
-		data.getArrow().getWorld().spawnParticle(VParticle.LARGE_EXPLOSION.get(), data.getArrow().getLocation(), 16, 1.5, 1.5, 1.5);
-		data.getArrow().getWorld().spawnParticle(VParticle.EXPLOSION.get(), data.getArrow().getLocation(), 48, 0, 0, 0, .4);
-		data.getArrow().getWorld().playSound(data.getArrow().getLocation(), Sounds.ENTITY_GENERIC_EXPLODE, 3, 1);
-		for (Entity ent : data.getArrow().getNearbyEntities(5, 5, 5))
-			if (ent instanceof LivingEntity)
+		data.getArrow().getWorld().spawnParticle(VParticle.LARGE_EXPLOSION.get(), data.getImpactLocation(), 16, 1.5, 1.5, 1.5);
+		data.getArrow().getWorld().spawnParticle(VParticle.EXPLOSION.get(), data.getImpactLocation(), 48, 0, 0, 0, .4);
+		data.getArrow().getWorld().playSound(data.getImpactLocation(), Sounds.ENTITY_GENERIC_EXPLODE, 3, 1);
+		for (Entity ent : data.getNearbyEntities(5, 5, 5))
+			if (ent instanceof LivingEntity && UtilityMethods.canTarget(data.getShooter(), null, ent))
 				((LivingEntity) ent).damage(dmg, data.getShooter());
 	}
 }

@@ -16,7 +16,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
+import net.Indyuce.moarbows.bow.effect.EffectTask;
 
 public class Autobow extends MoarBow {
 	public Autobow() {
@@ -26,24 +26,30 @@ public class Autobow extends MoarBow {
 		addModifier(new DoubleModifier("cooldown", new LinearFormula(8, -1, 3, 8)), new DoubleModifier("arrows", new LinearFormula(8, -1, 3, 8)));
 	}
 
+    @Override
+    public boolean usesVanillaArrow() {
+        return false;
+    }
+
 	@Override
 	public boolean canShoot(EntityShootBowEvent event, ArrowMetadata data) {
-		event.setCancelled(true);
-		new BukkitRunnable() {
+		new EffectTask(data) {
 			int ti = 0;
 
-			public void run() {
-				if (ti++ > 20 * event.getForce() || !UtilityMethods.consumeAmmo(data.getShooter(), new ItemStack(Material.ARROW))) {
+			public void tick() {
+				if (ti >= Math.max(1, (int) Math.ceil(data.getDouble("arrows") * event.getForce()))
+                        || (ti > 0 && !UtilityMethods.consumeAmmo(data.getShooter(), new ItemStack(Material.ARROW)))) {
 					cancel();
 					return;
 				}
 
+				ti++;
 				Location loc = data.getShooter().getEyeLocation().clone();
 				loc.getWorld().spawnParticle(VParticle.CRIT.get(), loc, 6, .2, .2, .2, 0);
 				data.getShooter().getWorld().playSound(data.getShooter().getLocation(), Sounds.ENTITY_ARROW_SHOOT, 1, 1.5f);
 				loc.setPitch(loc.getPitch() + random.nextInt(3) - 1);
 				loc.setYaw(loc.getYaw() + random.nextInt(3) - 1);
-				data.getShooter().launchProjectile(Arrow.class).setVelocity(loc.getDirection().multiply(3.3 * event.getForce()));
+				net.Indyuce.moarbows.bow.effect.ProjectileEffects.arrow(data).setVelocity(loc.getDirection().multiply(3.3 * event.getForce()));
 			}
 		}.runTaskTimer(MoarBows.plugin, 0, 2);
 		return false;

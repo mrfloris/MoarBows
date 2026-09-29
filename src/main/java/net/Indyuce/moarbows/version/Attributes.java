@@ -5,26 +5,11 @@ import net.Indyuce.moarbows.util.UtilityMethods;
 import net.Indyuce.moarbows.util.lib.NotNull;
 import org.bukkit.attribute.Attribute;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
-/**
- * In 1.21.2 the Attribute enum was changed to an abstract class.
- * Minecraft and therefore Spigot/Paper now use a registry to save
- * attributes, they are no longer hardcoded in an enum.
- * <p>
- * The Java compiler does not like relocations of methods like
- * Enum#valueOf() and Enum#values() so this class just fixes that
- * semantic problem.
- * <p>
- * In the future, it might be needed to wrap attributes inside
- * to support both IDs and namespaced keys, just like what's
- * already been done to attribute modifiers.
- */
+/** Supported registry lookup with aliases retained for the upstream helper API. */
 public class Attributes {
 
     /**
@@ -36,63 +21,22 @@ public class Attributes {
     private static final Map<Attribute, String> ATTRIBUTE_NAMES = new HashMap<>();
 
     static {
-
-        // Before 1.21.2
-        if (MoarBows.plugin.getVersion().isUnder(1, 21, 2)) {
-            try {
-
-                // Look through all enum fields and store them
-                for (Field field : Attribute.class.getDeclaredFields())
-                    if (field.getType() == Attribute.class) {
-                        Attribute attr = (Attribute) field.get(null);
-                        BY_SPIGOT_ID.put(field.getName(), attr);
-                        ATTRIBUTE_NAMES.put(attr, field.getName());
-                    }
-
-            } catch (Exception exception) {
-                throw new RuntimeException("Reflection error", exception);
-            }
-        }
-
-        // 1.21.2+ Attribute is now an abstract class, not interface
-        else {
-
-            for (Attribute attribute : Attribute.values()) {
-                String name = attribute.getKey().getKey().toUpperCase();
-                BY_SPIGOT_ID.put(name, attribute);
-                ATTRIBUTE_NAMES.put(attribute, name);
-            }
+        for (Attribute attribute : org.bukkit.Registry.ATTRIBUTE) {
+            String name = attribute.getKey().getKey().toUpperCase(java.util.Locale.ROOT);
+            BY_SPIGOT_ID.put(name, attribute);
+            ATTRIBUTE_NAMES.put(attribute, name);
         }
     }
 
     @NotNull
     public static Attribute fromName(String... candidates) {
-        return UtilityMethods.resolveField(getResolver(), candidates);
+        return UtilityMethods.resolveField(candidate -> BY_SPIGOT_ID.get(
+                candidate.replaceFirst("^(GENERIC_|PLAYER_|ZOMBIE_|HORSE_)", "")), candidates);
     }
 
     @NotNull
     public static String name(@NotNull Attribute attribute) {
         return ATTRIBUTE_NAMES.get(attribute);
-    }
-
-    private static Function<String, Attribute> RESOLVER;
-
-    private static Function<String, Attribute> getResolver() {
-        if (RESOLVER == null)
-            try {
-                Method method = Attribute.class.getDeclaredMethod("valueOf", String.class);
-                RESOLVER = str -> {
-                    try {
-                        return (Attribute) method.invoke(null, str);
-                    } catch (Exception exception) {
-                        throw new RuntimeException(exception);
-                    }
-                };
-            } catch (Exception exception) {
-                throw new RuntimeException("Reflection error: " + exception.getMessage());
-            }
-
-        return RESOLVER;
     }
 
     /**

@@ -1,6 +1,8 @@
 package net.Indyuce.moarbows.bow.list;
 
 import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.bow.effect.EffectDamage;
+import net.Indyuce.moarbows.util.UtilityMethods;
 import net.Indyuce.moarbows.bow.MoarBow;
 import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
 import net.Indyuce.moarbows.bow.particle.ParticleData;
@@ -40,14 +42,14 @@ public class Fire_Bow extends MoarBow {
 		double radius = data.getDouble("radius");
 
 		data.getArrow().remove();
-		data.getArrow().getWorld().spawnParticle(VParticle.LARGE_EXPLOSION.get(), data.getArrow().getLocation(), 0);
-		data.getArrow().getWorld().spawnParticle(VParticle.LAVA.get(), data.getArrow().getLocation(), 12, 0, 0, 0);
-		data.getArrow().getWorld().spawnParticle(VParticle.FLAME.get(), data.getArrow().getLocation(), 48, 0, 0, 0, .13);
-		data.getArrow().getWorld().playSound(data.getArrow().getLocation(), Sounds.ENTITY_FIREWORK_ROCKET_BLAST, 3, 1);
-		for (Entity entity : data.getArrow().getNearbyEntities(radius, radius, radius))
-			if (entity instanceof LivingEntity) {
+		data.getArrow().getWorld().spawnParticle(VParticle.LARGE_EXPLOSION.get(), data.getImpactLocation(), 0);
+		data.getArrow().getWorld().spawnParticle(VParticle.LAVA.get(), data.getImpactLocation(), 12, 0, 0, 0);
+		data.getArrow().getWorld().spawnParticle(VParticle.FLAME.get(), data.getImpactLocation(), 48, 0, 0, 0, .13);
+		data.getArrow().getWorld().playSound(data.getImpactLocation(), Sounds.ENTITY_FIREWORK_ROCKET_BLAST, 3, 1);
+		for (Entity entity : data.getNearbyEntities(radius, radius, radius))
+			if (entity instanceof LivingEntity && UtilityMethods.canTarget(data.getShooter(), null, entity)) {
 				new SmallParticleEffect(entity, VParticle.FLAME.get());
-				entity.setFireTicks(Math.min(entity.getFireTicks() + duration, maxTicks));
+				EffectDamage.ignite(entity, data.getShooter(), Math.min(entity.getFireTicks() + duration, maxTicks));
 			}
 	}
 }

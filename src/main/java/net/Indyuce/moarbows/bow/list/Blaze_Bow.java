@@ -2,6 +2,7 @@ package net.Indyuce.moarbows.bow.list;
 
 import net.Indyuce.moarbows.MoarBows;
 import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.bow.effect.EffectDamage;
 import net.Indyuce.moarbows.bow.MoarBow;
 import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
 import net.Indyuce.moarbows.bow.particle.ParticleData;
@@ -16,7 +17,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
+import net.Indyuce.moarbows.bow.effect.EffectTask;
 import org.bukkit.util.Vector;
 
 public class Blaze_Bow extends MoarBow {
@@ -29,33 +30,39 @@ public class Blaze_Bow extends MoarBow {
 				new DoubleModifier("duration", new LinearFormula(4, .3)));
 	}
 
+    @Override
+    public boolean usesVanillaArrow() {
+        return false;
+    }
+
 	@Override
 	public boolean canShoot(EntityShootBowEvent event, ArrowMetadata data) {
-		event.setCancelled(true);
 		final double dmg = data.getDouble("damage") * UtilityMethods.getPowerDamageMultiplier(data.getSource());
 		final double duration = data.getDouble("duration");
-		if (!UtilityMethods.consumeAmmo(data.getShooter(), new ItemStack(Material.ARROW)))
-			return false;
 
-		new BukkitRunnable() {
+		new EffectTask(data) {
 			Location loc = data.getShooter().getEyeLocation();
 			double ti = 0;
 			Vector v = data.getShooter().getEyeLocation().getDirection().multiply(1.25);
 
-			public void run() {
+			public void tick() {
 				for (double j = 0; j < 3; j++) {
 					ti += .5;
 					loc.add(v);
+                    if (!loc.getWorld().isChunkLoaded(loc.getBlockX() >> 4, loc.getBlockZ() >> 4) || loc.getBlock().getType().isSolid()) {
+                        cancel();
+                        return;
+                    }
 					loc.getWorld().spawnParticle(VParticle.FLAME.get(), loc, 8, .1, .1, .1, 0);
 					loc.getWorld().spawnParticle(VParticle.SMOKE.get(), loc, 0);
 					loc.getWorld().playSound(loc, Sounds.BLOCK_NOTE_BLOCK_HAT, 3, 2);
-					for (LivingEntity entity : loc.getWorld().getEntitiesByClass(LivingEntity.class))
+					for (LivingEntity entity : loc.getWorld().getNearbyLivingEntities(loc, 2))
 						if (UtilityMethods.canTarget(data.getShooter(), loc, entity) && !entity.equals(data.getShooter())) {
-							new BukkitRunnable() {
+							new EffectTask(data) {
 								final Location loc2 = entity.getLocation();
 								double y = 0;
 
-								public void run() {
+								public void tick() {
 									for (int item = 0; item < 2; item++) {
 										y += .05;
 										for (int j = 0; j < 2; j++) {
@@ -72,8 +79,8 @@ public class Blaze_Bow extends MoarBow {
 							entity.getWorld().playSound(entity.getLocation(), Sounds.ENTITY_FIREWORK_ROCKET_BLAST, 3, 0);
 							loc.getWorld().spawnParticle(VParticle.LARGE_EXPLOSION.get(), entity.getLocation().add(0, 1, 0), 0);
 							cancel();
-							entity.damage(dmg, data.getShooter());
-							entity.setFireTicks((int) (duration * 20));
+							EffectDamage.afterDamage(entity, dmg, data.getShooter(),
+                                    () -> EffectDamage.ignite(entity, data.getShooter(), (int) (duration * 20)));
 							return;
 						}
 				}

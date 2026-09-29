@@ -11,7 +11,7 @@ import org.bukkit.EntityEffect;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
-import org.bukkit.scheduler.BukkitRunnable;
+import net.Indyuce.moarbows.bow.effect.EffectTask;
 
 public class Shocking_Bow extends MoarBow {
 	public Shocking_Bow() {
@@ -29,13 +29,16 @@ public class Shocking_Bow extends MoarBow {
 	@Override
 	public void whenHit(EntityDamageByEntityEvent event, ArrowMetadata data, Entity target) {
 		int duration = (int) Math.min(300, data.getDouble("duration") * 10);
-		new BukkitRunnable() {
+		new EffectTask(data) {
 			double ti = 0;
 
-			public void run() {
-				if (ti++ >= duration)
+			public void tick() {
+				if (ti++ >= duration) {
 					cancel();
-				target.playEffect(EntityEffect.HURT);
+					return;
+					}
+				if (!target.isValid() || target.isDead()) { cancel(); return; }
+                if (target instanceof org.bukkit.entity.LivingEntity living) living.playHurtAnimation(0);
 			}
 		}.runTaskTimer(MoarBows.plugin, 0, 2);
 	}

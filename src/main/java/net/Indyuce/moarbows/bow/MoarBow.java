@@ -6,6 +6,7 @@ import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
 import net.Indyuce.moarbows.bow.modifier.Modifier;
 import net.Indyuce.moarbows.bow.modifier.StringModifier;
 import net.Indyuce.moarbows.bow.particle.ParticleData;
+import net.Indyuce.moarbows.manager.BowManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -36,7 +37,7 @@ public abstract class MoarBow {
     protected static final Random random = new Random();
 
     public MoarBow(String[] lore, ParticleData particles, String[] craft) {
-        this.id = getClass().getSimpleName().toUpperCase();
+        this.id = getClass().getSimpleName().toUpperCase(Locale.ROOT);
         this.name = "&f" + getClass().getSimpleName().replace("_", " ");
 
         this.lore = lore == null ? new ArrayList<>() : Arrays.asList(lore);
@@ -66,6 +67,14 @@ public abstract class MoarBow {
      */
     public abstract boolean canShoot(EntityShootBowEvent event, ArrowMetadata data);
 
+    public boolean usesVanillaArrow() {
+        return true;
+    }
+
+    /** Synchronous event damage adjustment; irreversible effects belong in whenHit. */
+    public void modifyHit(EntityDamageByEntityEvent event, ArrowMetadata data, Entity target) {
+    }
+
     /**
      * When an arrow fired by that bow hits another entity. Does NOT
      * get called when the arrow lands on the ground/on a block.
@@ -93,7 +102,7 @@ public abstract class MoarBow {
     }
 
     public String getLowerCaseId() {
-        return id.toLowerCase().replace("_", "-");
+        return id.toLowerCase(Locale.ROOT).replace("_", "-");
     }
 
     public String getUncoloredName() {
@@ -162,6 +171,8 @@ public abstract class MoarBow {
     }
 
     public void update(ConfigurationSection config) {
+        if (config == null || config.getString("name", "").isBlank())
+            throw new IllegalArgumentException("Missing name for bow " + id);
         name = config.getString("name");
         lore = config.getStringList("lore");
         try {
@@ -176,7 +187,10 @@ public abstract class MoarBow {
         craftEnabled = config.getBoolean("craft-enabled");
 
         // reload modifiers
-        mods.forEach((key, modifier) -> modifier.load(config.get(key)));
+        mods.forEach((key, modifier) -> {
+            if (config.contains(key))
+                modifier.load(config.get(key));
+        });
     }
 
     public ItemStack getItem() {
@@ -186,7 +200,7 @@ public abstract class MoarBow {
     public ItemStack getItem(int level) {
         level = Math.max(1, level);
 
-        ItemStack item = new ItemStack(Material.BOW);
+        ItemStack item = ItemStack.of(Material.BOW);
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(getName());
 
@@ -209,8 +223,8 @@ public abstract class MoarBow {
         if (MoarBows.plugin.getLanguage().unbreakable)
             meta.setUnbreakable(true);
 
-        meta.getPersistentDataContainer().set(new NamespacedKey(MoarBows.plugin, "MoarBow"), PersistentDataType.STRING, getId());
-        meta.getPersistentDataContainer().set(new NamespacedKey(MoarBows.plugin, "MoarBowLevel"), PersistentDataType.INTEGER, level);
+        meta.getPersistentDataContainer().set(BowManager.BOW_KEY, PersistentDataType.STRING, getId());
+        meta.getPersistentDataContainer().set(BowManager.LEVEL_KEY, PersistentDataType.INTEGER, level);
 
         item.setItemMeta(meta);
 
@@ -224,8 +238,9 @@ public abstract class MoarBow {
 
         Modifier modifier;
         while (str.contains("{") && str.substring(str.indexOf("{")).contains("}")) {
-            String holder = str.substring(str.indexOf("{") + 1, str.indexOf("}")).replace("_", "-");
-            str = str.replace("{" + holder + "}",
+            String originalHolder = str.substring(str.indexOf("{") + 1, str.indexOf("}", str.indexOf("{")));
+            String holder = originalHolder.replace("_", "-");
+            str = str.replace("{" + originalHolder + "}",
                     hasModifier(holder) && (modifier = getModifier(holder)) instanceof DoubleModifier ? ((DoubleModifier) modifier).getDisplay(x)
                             : "PHE");
         }

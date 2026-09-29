@@ -1,0 +1,12 @@
+name: MoarBowsSmoke
+version: 1.0
+main: net.indyuce.moarbows.smoke.MoarBowsSmoke
+api-version: '26.2'
+depend: [MoarBows]
+commands:
+  moarbowssmoke:
+    description: Runs isolated MoarBows API smoke assertions
+    permission: moarbowssmoke.run
+permissions:
+  moarbowssmoke.run:
+    default: op

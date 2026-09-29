@@ -17,6 +17,7 @@ public class PlayerData {
     private final UUID uuid;
 
     private Player player;
+    private long effectSession;
 
     /*
      * used to check twice a second if the player changed the item he's been
@@ -30,7 +31,7 @@ public class PlayerData {
      */
     private final Map<String, Long> cooldowns = new HashMap<>();
 
-    private static Map<UUID, PlayerData> playerDatas = new HashMap<>();
+    private static final Map<UUID, PlayerData> playerDatas = new HashMap<>();
 
     /**
      * Private constructor since it is only used when setting
@@ -51,49 +52,83 @@ public class PlayerData {
     }
 
     public void updateItems() {
+        if (player == null || !player.isOnline()) return;
         if (mainhand == null || !mainhand.isSimilar(player.getInventory().getItemInMainHand())) {
-            mainhand = player.getInventory().getItemInMainHand();
-            if (mainparticles != null)
-                mainparticles.cancel();
+            mainhand = player.getInventory().getItemInMainHand().clone();
+            if (mainparticles != null) mainparticles.cancel();
+            mainparticles = null;
             MoarBow mainbow = MoarBows.plugin.getBowManager().get(mainhand);
             if (mainbow != null && mainbow.hasParticles())
                 (mainparticles = mainbow.getParticles().newRunnable(player, false)).runTaskTimer(MoarBows.plugin, 0, 4);
         }
 
         if (offhand == null || !offhand.isSimilar(player.getInventory().getItemInOffHand())) {
-            offhand = player.getInventory().getItemInOffHand();
-            if (offparticles != null)
-                offparticles.cancel();
+            offhand = player.getInventory().getItemInOffHand().clone();
+            if (offparticles != null) offparticles.cancel();
+            offparticles = null;
             MoarBow offbow = MoarBows.plugin.getBowManager().get(offhand);
             if (offbow != null && offbow.hasParticles())
                 (offparticles = offbow.getParticles().newRunnable(player, true)).runTaskTimer(MoarBows.plugin, 0, 4);
         }
     }
 
-    public void logOff() {
+    private void stopParticles() {
         mainhand = null;
         offhand = null;
-        player = null;
+        if (mainparticles != null) mainparticles.cancel();
+        if (offparticles != null) offparticles.cancel();
+        mainparticles = null;
+        offparticles = null;
+    }
 
-        if (mainparticles != null)
-            mainparticles.cancel();
-        if (offparticles != null)
-            offparticles.cancel();
+    public void invalidateEffects() {
+        effectSession++;
+    }
+
+    public long getEffectSession() {
+        return effectSession;
+    }
+
+    public void logOff() {
+        stopParticles();
+        invalidateEffects();
+        player = null;
+    }
+
+    public static void resetParticles() {
+        playerDatas.values().forEach(PlayerData::stopParticles);
+    }
+
+    public static void clearAll() {
+        playerDatas.values().forEach(PlayerData::logOff);
+        playerDatas.clear();
+    }
+
+    /** Keep UUID-only cooldown records across reconnects, then release expired offline rows. */
+    public static void pruneOffline() {
+        long now = System.currentTimeMillis();
+        playerDatas.values().removeIf(data -> {
+            data.cooldowns.values().removeIf(expiry -> expiry <= now);
+            return data.player == null && data.cooldowns.isEmpty();
+        });
     }
 
     public boolean hasCooldown(MoarBow bow, int level) {
-        return cooldowns.containsKey(bow.getId())
-                && cooldowns.get(bow.getId()) + bow.getDouble("cooldown", level) * 1000 > System.currentTimeMillis();
+        return cooldowns.getOrDefault(bow.getId(), 0L) > System.currentTimeMillis();
     }
 
     public double getRemainingCooldown(MoarBow bow, int level) {
-        return cooldowns.containsKey(bow.getId())
-                ? (double) Math.max(0, cooldowns.get(bow.getId()) + bow.getDouble("cooldown", level) * 1000 - System.currentTimeMillis()) / 1000.
-                : 0;
+        return Math.max(0, cooldowns.getOrDefault(bow.getId(), 0L) - System.currentTimeMillis()) / 1000.;
     }
 
     public void applyCooldown(MoarBow bow) {
-        cooldowns.put(bow.getId(), System.currentTimeMillis());
+        applyCooldown(bow, 1);
+    }
+
+    public void applyCooldown(MoarBow bow, int level) {
+        double seconds = bow.getDouble("cooldown", level);
+        if (!Double.isFinite(seconds) || seconds < 0) throw new IllegalArgumentException("Invalid bow cooldown");
+        cooldowns.put(bow.getId(), System.currentTimeMillis() + (long) (seconds * 1000));
     }
 
     @NotNull
@@ -102,6 +137,7 @@ public class PlayerData {
     }
 
     public static PlayerData setup(Player player) {
+        pruneOffline();
         PlayerData found = playerDatas.computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData(player));
         found.player = player;
         return found;

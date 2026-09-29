@@ -30,11 +30,14 @@ public class Laser_Bow extends MoarBow {
 		addModifier(new DoubleModifier("cooldown", new LinearFormula(0, 0)), new DoubleModifier("damage", new LinearFormula(5, 3)));
 	}
 
+    @Override
+    public boolean usesVanillaArrow() {
+        return false;
+    }
+
 	@Override
 	public boolean canShoot(EntityShootBowEvent event, ArrowMetadata data) {
 		double damage = data.getDouble("damage") * UtilityMethods.getPowerDamageMultiplier(data.getSource());
-		if (!UtilityMethods.consumeAmmo(data.getShooter(), new ItemStack(Material.ARROW)))
-			return false;
 
 		data.getShooter().getWorld().playSound(data.getShooter().getLocation(), Sounds.ENTITY_ARROW_SHOOT, 2, 0);
 		int range = (int) (56 * event.getForce());
@@ -43,7 +46,7 @@ public class Laser_Bow extends MoarBow {
 		for (int j = 0; j < range; j++) {
 			loc.add(data.getShooter().getEyeLocation().getDirection());
 			loc.getWorld().spawnParticle(VParticle.REDSTONE.get(), loc, 0, new Particle.DustOptions(Color.RED, 1.2f));
-			if (loc.getBlock().getType().isSolid())
+			if (!loc.getWorld().isChunkLoaded(loc.getBlockX() >> 4, loc.getBlockZ() >> 4) || loc.getBlock().getType().isSolid())
 				break;
 
 			for (Entity target : data.getShooter().getNearbyEntities(100, 100, 100))

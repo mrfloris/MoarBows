@@ -28,25 +28,13 @@ public class ServerVersion {
     public ServerVersion() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
 
         // Version numbers
-        final String[] bukkitSplit = Bukkit.getServer().getBukkitVersion().split("\\-")[0].split("\\."); // ["1", "20", "4"]
-        bukkitVersion = new int[Math.min(MAXIMUM_INDEX, bukkitSplit.length)];
-        for (int i = 0; i < bukkitVersion.length; i++)
-            bukkitVersion[i] = Integer.parseInt(bukkitSplit[i]);
+        bukkitVersion = parseVersion(Bukkit.getServer().getBukkitVersion());
 
-        // Compute rev number
-        revNumber = findRevisionNumber();
-        craftBukkitVersion = craftBukkitVersion(revNumber); // "v1_20_R4"
-
-        // Running Paper?
-        boolean isPaper = false;
-        try {
-            // Any other works, just the shortest I could find.
-            Class.forName("com.destroystokyo.paper.ParticleBuilder");
-            isPaper = true;
-        } catch (ClassNotFoundException ignored) {
-            // Ignored
-        }
-        this.paper = isPaper;
+        // Modern Paper exposes its version through the supported Bukkit API.
+        // Kept for source compatibility with integrations; no CraftBukkit probing.
+        revNumber = 0;
+        craftBukkitVersion = Bukkit.getBukkitVersion();
+        paper = true;
 
         // Validate all mappings
         try {
@@ -62,36 +50,13 @@ public class ServerVersion {
         }
     }
 
-    private String craftBukkitVersion(int revNumber) {
-        return "v" + bukkitVersion[0] + "_" + bukkitVersion[1] + "_R" + revNumber;
-    }
-
-    private static final int MAXIMUM_REVISION_NUMBER = 10;
-    private static final String CLASS_NAME_USED = "CraftServer";
-
-    private int findRevisionNumber() {
-
-        // Spigot || Paper <1.20.5
-        try {
-            final Class<?> bukkitServerClass = Bukkit.getServer().getClass();
-            final String rev = bukkitServerClass.getPackage().getName().replace(".", ",").split(",")[3]; // "1_20_R4"
-            return Integer.parseInt(rev.split("_")[2].replaceAll("[^0-9]", ""));
-        } catch (Throwable throwable) {
-            // Ignored
-        }
-
-        // Spigot 1.20.5+
-        for (int revNumber = 1; revNumber < MAXIMUM_REVISION_NUMBER; revNumber++)
-            try {
-                final String candidate = craftBukkitVersion(revNumber);
-                Class.forName("org.bukkit.craftbukkit." + candidate + "." + CLASS_NAME_USED);
-                return revNumber;
-            } catch (Throwable throwable) {
-                // Ignored
-            }
-
-        // Assume no need for the revision number (Paper 1.20.5+)
-        return 0;
+    static int[] parseVersion(String value) {
+        // Paper 26.x uses e.g. 26.2.build.129-stable; the build is not a game version.
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:[.\\-].*)?$").matcher(value);
+        if (!matcher.matches()) throw new IllegalArgumentException("Unrecognized Paper version: " + value);
+        return matcher.group(3) == null
+                ? new int[]{Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2))}
+                : new int[]{Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2)), Integer.parseInt(matcher.group(3))};
     }
 
     public boolean isPaper() {

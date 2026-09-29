@@ -2,6 +2,7 @@ package net.Indyuce.moarbows.bow.list;
 
 import net.Indyuce.moarbows.MoarBows;
 import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.bow.effect.EffectDamage;
 import net.Indyuce.moarbows.bow.MoarBow;
 import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
 import net.Indyuce.moarbows.bow.particle.ParticleData;
@@ -14,7 +15,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
-import org.bukkit.scheduler.BukkitRunnable;
+import net.Indyuce.moarbows.bow.effect.EffectTask;
 import org.bukkit.util.Vector;
 
 public class Meteor_Bow extends MoarBow {
@@ -44,16 +45,16 @@ public class Meteor_Bow extends MoarBow {
         double radius = data.getDouble("radius");
         double radiusSquared = radius * radius;
 
-        data.getArrow().getWorld().playSound(data.getArrow().getLocation(), Sounds.ENTITY_ENDERMAN_TELEPORT, 2, 1);
-        new BukkitRunnable() {
-            final Location loc = data.getArrow().getLocation();
+        data.getArrow().getWorld().playSound(data.getImpactLocation(), Sounds.ENTITY_ENDERMAN_TELEPORT, 2, 1);
+        new EffectTask(data) {
+            final Location loc = data.getImpactLocation();
             final Location source = loc.clone().add(5 * Math.cos(random.nextDouble() * 2 * Math.PI), 20,
                     5 * Math.sin(random.nextDouble() * 2 * Math.PI));
-            final Vector vec = loc.subtract(source).toVector().multiply((double) 1 / 30);
+            final Vector vec = loc.clone().subtract(source).toVector().multiply((double) 1 / 30);
 
             int ti = 0;
 
-            public void run() {
+            public void tick() {
                 if (ti == 0)
                     loc.setDirection(vec);
 
@@ -73,10 +74,10 @@ public class Meteor_Bow extends MoarBow {
                     for (double j = 0; j < Math.PI * 2; j += Math.PI / 24)
                         source.getWorld().spawnParticle(VParticle.LARGE_SMOKE.get(), source, 0, Math.cos(j), 0, Math.sin(j), .5);
 
-                    for (LivingEntity entity : data.getArrow().getWorld().getEntitiesByClass(LivingEntity.class))
-                        if (entity.getLocation().distanceSquared(source) < radiusSquared) {
-                            entity.damage(damage, data.getShooter());
-                            entity.setVelocity(entity.getLocation().toVector().subtract(source.toVector()).setY(.75).normalize().multiply(knockback));
+                    for (LivingEntity entity : source.getWorld().getNearbyLivingEntities(source, radius))
+                        if (entity.getLocation().distanceSquared(source) < radiusSquared && UtilityMethods.canTarget(data.getShooter(), null, entity)) {
+                            EffectDamage.afterDamage(entity, damage, data.getShooter(), () ->
+                                    EffectDamage.push(entity, data.getShooter(), entity.getLocation().toVector().subtract(source.toVector()).setY(.75).normalize().multiply(knockback)));
                         }
                     cancel();
                 }

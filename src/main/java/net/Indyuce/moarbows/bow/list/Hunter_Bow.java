@@ -28,13 +28,17 @@ public class Hunter_Bow extends MoarBow {
 		return true;
 	}
 
+    @Override
+    public void modifyHit(EntityDamageByEntityEvent event, ArrowMetadata data, Entity target) {
+        if (target instanceof LivingEntity && !(target instanceof Monster)) event.setDamage(event.getDamage() * (1 + data.getDouble("extra") / 100));
+    }
+
 	@Override
 	public void whenHit(EntityDamageByEntityEvent event, ArrowMetadata data, Entity target) {
 		if (target instanceof Monster || !(target instanceof LivingEntity))
 			return;
 
-		event.setDamage(event.getDamage() * (1 + data.getDouble("extra") / 100));
-		target.getWorld().playEffect(target.getLocation(), Effect.STEP_SOUND, 55);
+		target.getWorld().spawnParticle(org.bukkit.Particle.BLOCK, target.getLocation(), 12, .3, .3, .3, org.bukkit.Material.REDSTONE_WIRE.createBlockData());
 	}
 
 	@Override

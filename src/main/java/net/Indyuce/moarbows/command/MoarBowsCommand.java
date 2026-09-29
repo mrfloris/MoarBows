@@ -3,10 +3,11 @@ package net.Indyuce.moarbows.command;
 import net.Indyuce.moarbows.MoarBows;
 import net.Indyuce.moarbows.bow.MoarBow;
 import net.Indyuce.moarbows.gui.BowList;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.hover.content.Text;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.Indyuce.moarbows.util.lib.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -20,6 +21,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Optional;
+import java.util.Locale;
 
 public class MoarBowsCommand implements CommandExecutor {
 	@Override
@@ -41,6 +43,7 @@ public class MoarBowsCommand implements CommandExecutor {
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "/mb menu " + ChatColor.WHITE + "shows all available bows (GUI).");
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "/mb list " + ChatColor.WHITE + "shows all available bows.");
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "/mb reload " + ChatColor.WHITE + "reloads the config file.");
+			sender.sendMessage(ChatColor.LIGHT_PURPLE + "/mb migrate <bow> (level) " + ChatColor.WHITE + "tags the held legacy bow after admin verification.");
 			return true;
 		}
 
@@ -56,6 +59,7 @@ public class MoarBowsCommand implements CommandExecutor {
 			}
 
 			new BowList((Player) sender).open();
+			return true;
 		}
 
 		// perm for op commands
@@ -66,7 +70,7 @@ public class MoarBowsCommand implements CommandExecutor {
 
 		if (args[0].equalsIgnoreCase("reload")) {
 			MoarBows.plugin.reloadPlugin();
-			sender.sendMessage(ChatColor.YELLOW + "Config files & bows reloaded.");
+			sender.sendMessage(ChatColor.YELLOW + "Configuration reload requested; check console for completion.");
 		}
 
 		if (args[0].equalsIgnoreCase("list")) {
@@ -79,13 +83,10 @@ public class MoarBowsCommand implements CommandExecutor {
 			}
 
 			for (MoarBow bow : MoarBows.plugin.getBowManager().getBows())
-				sender.spigot().sendMessage(new ComponentBuilder(bow.getName())
-						.color(net.md_5.bungee.api.ChatColor.GREEN)
-						.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/mb get " + bow.getId()))
-						.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("Click to get the " + bow.getName())))
-						.append(", use /mb get " + bow.getLowerCaseId())
-						.color(net.md_5.bungee.api.ChatColor.WHITE)
-						.create());
+				sender.sendMessage(LegacyComponentSerializer.legacySection().deserialize(bow.getName())
+						.clickEvent(ClickEvent.runCommand("/mb get " + bow.getId()))
+						.hoverEvent(HoverEvent.showText(Component.text("Click to get this bow")))
+						.append(Component.text(", use /mb get " + bow.getLowerCaseId(), NamedTextColor.WHITE)));
 		}
 
 		if (args[0].equalsIgnoreCase("equip")) {
@@ -100,17 +101,18 @@ public class MoarBowsCommand implements CommandExecutor {
 				return true;
 			}
 
-			Optional<Entity> found = player.getNearbyEntities(10, 10, 10).stream().filter(entity -> entity instanceof LivingEntity).findFirst();
+			Optional<Entity> found = player.getNearbyEntities(10, 10, 10).stream()
+					.filter(entity -> entity instanceof LivingEntity living && !(entity instanceof Player)
+							&& living.isValid() && !living.isDead() && living.getEquipment() != null).findFirst();
 			if (!found.isPresent()) {
 				sender.sendMessage(ChatColor.RED + "Couldn't find an entity to equip.");
 				return true;
 			}
 
 			LivingEntity target = (LivingEntity) found.get();
-			ItemStack hand = target.getEquipment().getItemInMainHand();
-			target.getEquipment().setItemInMainHand(player.getEquipment().getItemInMainHand());
-			if (hand != null)
-				target.getWorld().dropItem(target.getLocation(), hand);
+			ItemStack hand = target.getEquipment().getItemInMainHand().clone();
+			target.getEquipment().setItemInMainHand(player.getEquipment().getItemInMainHand().clone());
+			player.getEquipment().setItemInMainHand(hand);
 		}
 
 		if (args[0].equalsIgnoreCase("get") || args[0].equalsIgnoreCase("give")) {
@@ -125,7 +127,7 @@ public class MoarBowsCommand implements CommandExecutor {
 			}
 
 			// bow
-			String bowFormat = args[1].toUpperCase().replace("-", "_");
+			String bowFormat = args[1].toUpperCase(Locale.ROOT).replace("-", "_");
 			if (!MoarBows.plugin.getBowManager().has(bowFormat)) {
 				sender.sendMessage(ChatColor.RED + "Couldn't find the bow called " + bowFormat + ".");
 				return true;
@@ -133,7 +135,7 @@ public class MoarBowsCommand implements CommandExecutor {
 
 			// player
 			MoarBow bow = MoarBows.plugin.getBowManager().get(bowFormat);
-			Player target = args.length > 2 ? Bukkit.getPlayer(args[2]) : ((Player) sender);
+			Player target = args.length > 2 ? Bukkit.getPlayerExact(args[2]) : ((Player) sender);
 			if (target == null) {
 				sender.sendMessage(ChatColor.RED + "Couldn't find the player called " + args[2] + ".");
 				return true;
@@ -150,10 +152,14 @@ public class MoarBowsCommand implements CommandExecutor {
 					return true;
 				}
 
-			// give item
+			// Refuse a full inventory before creating or delivering the item.
+			int emptySlot = target.getInventory().firstEmpty();
+			if (emptySlot < 0) {
+				sender.sendMessage(ChatColor.RED + "The player's inventory is full. No bow was given.");
+				return true;
+			}
 			ItemStack item = bow.getItem(level);
-			for (ItemStack drop : target.getInventory().addItem(item).values())
-				target.getWorld().dropItem(target.getLocation(), drop);
+			target.getInventory().setItem(emptySlot, item);
 			sender.sendMessage(ChatColor.YELLOW + target.getName() + " was given " + ChatColor.WHITE + bow.getName() + ChatColor.YELLOW + ".");
 
 			// message
@@ -169,9 +175,36 @@ public class MoarBowsCommand implements CommandExecutor {
 			}
 
 			Player player = (Player) sender;
-			for (MoarBow bow : MoarBows.plugin.getBowManager().getBows())
-				for (ItemStack drop : player.getInventory().addItem(bow.getItem(1)).values())
-					player.getWorld().dropItem(player.getLocation(), drop);
+			var bows = MoarBows.plugin.getBowManager().getBows();
+			long emptySlots = java.util.Arrays.stream(player.getInventory().getStorageContents())
+					.filter(item -> item == null || item.isEmpty()).count();
+			if (emptySlots < bows.size()) {
+				sender.sendMessage(ChatColor.RED + "Make room for " + bows.size() + " bows. No bows were given.");
+				return true;
+			}
+			var items = bows.stream().map(bow -> bow.getItem(1)).toList();
+			for (ItemStack item : items)
+				player.getInventory().setItem(player.getInventory().firstEmpty(), item);
+		}
+
+		if (args[0].equalsIgnoreCase("migrate")) {
+			if (!(sender instanceof Player player)) {
+				sender.sendMessage(ChatColor.RED + "Hold the verified legacy bow in-game to migrate it.");
+				return true;
+			}
+			if (args.length < 2 || args.length > 3) {
+				sender.sendMessage(ChatColor.RED + "Usage: /mb migrate <bow> (level). Verify the held bow's provenance first.");
+				return true;
+			}
+			try {
+				MoarBow bow = MoarBows.plugin.getBowManager().get(args[1].toUpperCase(Locale.ROOT).replace('-', '_'));
+				int level = args.length == 3 ? Integer.parseInt(args[2]) : 1;
+				ItemStack migrated = MoarBows.plugin.getBowManager().migrate(player.getInventory().getItemInMainHand(), bow, level);
+				player.getInventory().setItemInMainHand(migrated);
+				sender.sendMessage(ChatColor.YELLOW + "Held bow tagged as " + bow.getId() + " at level " + level + ". Other item data was preserved.");
+			} catch (IllegalArgumentException exception) {
+				sender.sendMessage(ChatColor.RED + "Migration refused: " + exception.getMessage());
+			}
 		}
 
 		return true;

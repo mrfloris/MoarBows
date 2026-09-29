@@ -30,15 +30,19 @@ public class Cupidons_Bow extends MoarBow {
 		return true;
 	}
 
+    @Override
+    public void modifyHit(EntityDamageByEntityEvent event, ArrowMetadata data, Entity target) {
+        if (target instanceof LivingEntity) event.setDamage(0);
+    }
+
 	@Override
 	public void whenHit(EntityDamageByEntityEvent event, ArrowMetadata data, Entity target) {
-		if (!(target instanceof LivingEntity))
+		if (!(target instanceof LivingEntity) || !target.isValid() || target.isDead())
 			return;
 
-		event.setDamage(0);
 		target.getWorld().spawnParticle(VParticle.HEART.get(), target.getLocation().add(0, target.getHeight(), 0), 16, 1, 1, 1);
 		target.getWorld().playSound(target.getLocation(), Sounds.ENTITY_BLAZE_AMBIENT, 2, 2);
-		double max = ((LivingEntity) target).getAttribute(Attributes.MAX_HEALTH).getBaseValue();
+		double max = ((LivingEntity) target).getAttribute(Attributes.MAX_HEALTH).getValue();
 		((LivingEntity) target).setHealth(Math.min(max, ((LivingEntity) target).getHealth() + data.getDouble("heal")));
 
 		if (Marked_Bow.isMarked(target))

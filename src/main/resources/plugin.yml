@@ -3,7 +3,10 @@ version: ${project.version}
 main: net.Indyuce.moarbows.MoarBows
 author: Indyuce
 softdepend: [ WorldGuard ]
-api-version: 1.14
+api-version: '26.2'
+website: https://github.com/mrfloris/MoarBows
+contributors: [mrfloris]
+description: Unofficial Java 25 and Paper 26.2/26.3 update of Indyuce's MoarBows
 commands:
   moarbows:
     description: Main command.
@@ -16,7 +19,7 @@ permissions:
     description: Access the bows GUI.
     default: op
   moarbows.anvil:
-    description: Allows to create a bow by renaming a regular one.
+    description: Allows custom bows to be used in an anvil.
     default: op
   moarbows.repair:
     description: Allows to repair a special bow.
@@ -35,6 +38,7 @@ permissions:
       moarbows.use.explosive-bow: true
       moarbows.use.shocking-bow: true
       moarbows.use.corrosive-bow: true
+      moarbows.use.corona-bow: true
       moarbows.use.hunter-bow: true
       moarbows.use.marked-bow: true
       moarbows.use.lightning-bowlt: true

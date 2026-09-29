@@ -14,7 +14,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
-import org.bukkit.scheduler.BukkitRunnable;
+import net.Indyuce.moarbows.bow.effect.EffectTask;
 
 public class Spartan_Bow extends MoarBow {
 	public Spartan_Bow() {
@@ -39,29 +39,26 @@ public class Spartan_Bow extends MoarBow {
 	public void whenLand(ArrowMetadata data) {
 		data.getArrow().remove();
 
-		final Location loc1 = data.getArrow().getLocation().clone();
+		final Location loc1 = data.getImpactLocation().clone();
 		double randomOffset = Math.PI * 4 * (random.nextDouble() - .5);
-		Location sky = data.getArrow().getLocation().clone().add(Math.cos(randomOffset) * 6, 13, Math.sin(randomOffset) * 6);
+		Location sky = data.getImpactLocation().clone().add(Math.cos(randomOffset) * 6, 13, Math.sin(randomOffset) * 6);
 		final double duration = data.getDouble("duration");
-		new BukkitRunnable() {
+		new EffectTask(data) {
 			double ti = 0;
 
-			public void run() {
-				if ((ti += 3d / 20d) > duration)
+			public void tick() {
+				if ((ti += 3d / 20d) > duration) {
 					cancel();
+					return;
+					}
 
 				sky.getWorld().spawnParticle(VParticle.LARGE_SMOKE.get(), sky, 0);
-				Arrow arrow1 = (Arrow) sky.getWorld().spawnEntity(sky, EntityType.ARROW);
-				// arrow1.setColor(Color.BLACK);
-
-				// EntityShootBowEvent event = new
-				// EntityShootBowEvent(data.getSender(), new
-				// ItemStack(Material.BOW), arrow1, 1);
-				// MoarBows.plugin.getServer().getPluginManager().callEvent(event);
-				// if (event.isCancelled()) {
-				// arrow1.remove();
-				// return;
-				// }
+                Arrow arrow1 = sky.getWorld().spawn(sky, Arrow.class, arrow -> {
+                    arrow.setShooter(data.getShooter());
+                    arrow.setPickupStatus(org.bukkit.entity.AbstractArrow.PickupStatus.DISALLOWED);
+                    arrow.setPersistent(false);
+                });
+                MoarBows.plugin.getArrowManager().trackEffect(arrow1, data);
 
 				arrow1.setVelocity(loc1.clone().add(8 * (random.nextDouble() - .5), 0, 8 * (random.nextDouble() - .5)).toVector()
 						.subtract(sky.toVector()).normalize());

@@ -1,6 +1,7 @@
 package net.Indyuce.moarbows.util;
 
 import net.Indyuce.moarbows.MoarBows;
+import net.Indyuce.moarbows.comp.worldguard.CustomFlag;
 import net.Indyuce.moarbows.util.lib.NotNull;
 import net.Indyuce.moarbows.version.VEnchantment;
 import org.bukkit.*;
@@ -8,10 +9,9 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
@@ -68,24 +68,49 @@ public class UtilityMethods {
 
         // Does not consume ammo if the player is in creative mode
         Player player = (Player) entity;
-        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR)
+        if (player.getGameMode() == GameMode.SPECTATOR || ammo == null || ammo.getAmount() < 1)
+            return false;
+        if (player.getGameMode() == GameMode.CREATIVE)
             return true;
 
-        // Returns false if the player has no item
-        if (!player.getInventory().containsAtLeast(ammo, 1))
+        // Check the complete request before changing a slot. Exact similarity
+        // preserves custom ammunition and metadata from other plugins.
+        var inventory = player.getInventory();
+        int available = 0;
+        for (ItemStack item : inventory.getStorageContents())
+            if (item != null && item.isSimilar(ammo))
+                available += item.getAmount();
+        ItemStack offhand = inventory.getItemInOffHand();
+        if (offhand.isSimilar(ammo))
+            available += offhand.getAmount();
+        if (available < ammo.getAmount())
             return false;
 
-        // Returns true and consumes the ammo if the player has enough
-        player.getInventory().removeItem(ammo);
+        int remaining = ammo.getAmount();
+        for (int slot = 0; slot < inventory.getStorageContents().length && remaining > 0; slot++) {
+            ItemStack item = inventory.getItem(slot);
+            if (item == null || !item.isSimilar(ammo))
+                continue;
+            int consumed = Math.min(remaining, item.getAmount());
+            ItemStack updated = item.clone();
+            updated.setAmount(item.getAmount() - consumed);
+            inventory.setItem(slot, updated.getAmount() == 0 ? null : updated);
+            remaining -= consumed;
+        }
+        if (remaining > 0) {
+            ItemStack updated = offhand.clone();
+            updated.setAmount(offhand.getAmount() - remaining);
+            inventory.setItemInOffHand(updated.getAmount() == 0 ? null : updated);
+        }
         return true;
     }
 
     public static boolean isPluginItem(ItemStack item, boolean lore) {
-        return item != null && item.hasItemMeta() && item.getItemMeta().hasDisplayName() && (!lore || item.getItemMeta().hasLore());
+        return MoarBows.plugin.getBowManager().get(item) != null;
     }
 
     public static int getBowLevel(ItemStack item) {
-        return item.hasItemMeta() ? item.getItemMeta().getPersistentDataContainer().get(new NamespacedKey(MoarBows.plugin, "MoarBowLevel"), PersistentDataType.INTEGER) : 0;
+        return MoarBows.plugin.getBowManager().getLevel(item);
     }
 
     public static double getPowerDamageMultiplier(@NotNull ItemStack item) {
@@ -95,10 +120,24 @@ public class UtilityMethods {
     }
 
     public static boolean canTarget(LivingEntity shooter, Location loc, Entity target) {
-        if (target.hasMetadata("NPC"))
+        if (!shooter.isValid() || shooter.isDead() || !target.isValid() || target.isDead()
+                || target.equals(shooter) || !target.getWorld().equals(shooter.getWorld()) || target.hasMetadata("NPC"))
             return false;
-
-        return !target.equals(shooter) && (loc == null || target.getBoundingBox().expand(.5, .5, .5).contains(loc.toVector()));
+        if (shooter instanceof Player player && player.getGameMode() == GameMode.SPECTATOR)
+            return false;
+        if (target instanceof Player player && (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR))
+            return false;
+        var protection = MoarBows.plugin.getWorldGuard();
+        boolean shooterAllowed = shooter instanceof Player player
+                ? protection.isFlagAllowed(player, CustomFlag.MB_BOWS)
+                : protection.isFlagAllowed(shooter.getLocation(), CustomFlag.MB_BOWS);
+        if (!shooterAllowed || !protection.isFlagAllowed(target.getLocation(), CustomFlag.MB_BOWS))
+            return false;
+        if (target instanceof Player && (!target.getWorld().getPVP()
+                || !protection.isPvpAllowed(shooter.getLocation()) || !protection.isPvpAllowed(target.getLocation())))
+            return false;
+        return loc == null || (loc.getWorld().equals(target.getWorld())
+                && target.getBoundingBox().expand(.5, .5, .5).contains(loc.toVector()));
     }
 
     public static double truncation(double x, int n) {
@@ -141,13 +180,14 @@ public class UtilityMethods {
          * the entities have not moved (e.g fireball which does 2+ calculations
          * per tick)
          */
-        int cx = loc.getChunk().getX();
-        int cz = loc.getChunk().getZ();
+        int cx = loc.getBlockX() >> 4;
+        int cz = loc.getBlockZ() >> 4;
 
         for (int x = -1; x < 2; x++)
             for (int z = -1; z < 2; z++)
-                for (Entity entity : loc.getWorld().getChunkAt(cx + x, cz + z).getEntities())
-                    action.accept(entity);
+                if (loc.getWorld().isChunkLoaded(cx + x, cz + z))
+                    for (Entity entity : loc.getWorld().getChunkAt(cx + x, cz + z).getEntities())
+                        action.accept(entity);
     }
 
     public static <T> void clean(Iterable<T> collection, Predicate<T> clean) {

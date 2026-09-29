@@ -2,6 +2,8 @@ package net.Indyuce.moarbows.bow.list;
 
 import net.Indyuce.moarbows.MoarBows;
 import net.Indyuce.moarbows.bow.ArrowMetadata;
+import net.Indyuce.moarbows.bow.effect.EffectDamage;
+import net.Indyuce.moarbows.util.UtilityMethods;
 import net.Indyuce.moarbows.bow.MoarBow;
 import net.Indyuce.moarbows.bow.modifier.DoubleModifier;
 import net.Indyuce.moarbows.bow.particle.ParticleData;
@@ -16,7 +18,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
-import org.bukkit.scheduler.BukkitRunnable;
+import net.Indyuce.moarbows.bow.effect.EffectTask;
 
 public class Earthquake_Bow extends MoarBow {
 	public Earthquake_Bow() {
@@ -43,7 +45,7 @@ public class Earthquake_Bow extends MoarBow {
 		double radius = data.getDouble("radius");
 		double knockup = data.getDouble("knockup");
 
-		Location loc = data.getArrow().getLocation();
+		Location loc = data.getImpactLocation();
 		for (int j = 0; j < 20; j++)
 			if (loc.add(0, -1, 0).getBlock().getType().isSolid()) {
 				loc.setY(Math.floor(loc.getY()) + 1);
@@ -57,13 +59,13 @@ public class Earthquake_Bow extends MoarBow {
 
 		// needs a small delay because of the arrow knockback
 		data.getArrow().remove();
-		data.getArrow().getWorld().playSound(data.getArrow().getLocation(), Sounds.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 2, 0);
-		new BukkitRunnable() {
-			public void run() {
-				for (Entity ent : data.getArrow().getNearbyEntities(radius, radius, radius))
-					if (ent instanceof LivingEntity) {
-						ent.playEffect(EntityEffect.HURT);
-						ent.setVelocity(ent.getVelocity().setY(knockup));
+		data.getArrow().getWorld().playSound(data.getImpactLocation(), Sounds.ENTITY_ZOMBIE_ATTACK_WOODEN_DOOR, 2, 0);
+		new EffectTask(data) {
+			public void tick() {
+				for (Entity ent : data.getNearbyEntities(radius, radius, radius))
+					if (ent instanceof LivingEntity && UtilityMethods.canTarget(data.getShooter(), null, ent)) {
+						((LivingEntity) ent).playHurtAnimation(0);
+						EffectDamage.push(ent, data.getShooter(), ent.getVelocity().setY(knockup));
 					}
 			}
 		}.runTaskLater(MoarBows.plugin, 1);

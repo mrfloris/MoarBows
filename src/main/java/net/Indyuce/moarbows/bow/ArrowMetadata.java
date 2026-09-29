@@ -3,6 +3,13 @@ package net.Indyuce.moarbows.bow;
 import net.Indyuce.moarbows.player.PlayerData;
 import net.Indyuce.moarbows.util.UtilityMethods;
 import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Player;
+import net.Indyuce.moarbows.MoarBows;
+import net.Indyuce.moarbows.comp.worldguard.CustomFlag;
+import java.util.UUID;
+import org.bukkit.Location;
+import org.bukkit.entity.Entity;
+import java.util.Collection;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 
@@ -12,13 +19,19 @@ public class ArrowMetadata {
 	private final Arrow arrow;
 
 	/**
-	 * The player instance is cached, that way the bow still
-	 * works if the player disconnects.
+	 * The original shooter instance is retained only for the lifetime of the shot;
+	 * the session token prevents effects resuming after reconnect, death or world change.
 	 */
 	private final LivingEntity shooter;
 
 	private final ItemStack source;
+	private final UUID worldId;
+    private final long effectSession;
+    private final double arrowDamage;
+    private final boolean critical;
+    private final int fireTicks;
 	private final int level;
+	private Location impact;
 	private final long date = System.currentTimeMillis();
 
 	/**
@@ -30,7 +43,12 @@ public class ArrowMetadata {
 		this.shooter = shooter;
 		this.arrow = arrow;
 
-		this.source = source;
+		this.source = source.clone();
+		this.worldId = shooter.getWorld().getUID();
+        this.effectSession = playerData == null ? 0 : playerData.getEffectSession();
+        this.arrowDamage = arrow.getDamage();
+        this.critical = arrow.isCritical();
+        this.fireTicks = arrow.getFireTicks();
 		this.level = UtilityMethods.getBowLevel(source);
 	}
 
@@ -43,7 +61,12 @@ public class ArrowMetadata {
 		this.shooter = playerData.getPlayer();
 		this.arrow = arrow;
 
-		this.source = source;
+		this.source = source.clone();
+		this.worldId = shooter.getWorld().getUID();
+        this.effectSession = playerData == null ? 0 : playerData.getEffectSession();
+        this.arrowDamage = arrow.getDamage();
+        this.critical = arrow.isCritical();
+        this.fireTicks = arrow.getFireTicks();
 		this.level = UtilityMethods.getBowLevel(source);
 	}
 
@@ -52,7 +75,7 @@ public class ArrowMetadata {
 	}
 
 	public ItemStack getSource() {
-		return source;
+		return source.clone();
 	}
 
 	public PlayerData getPlayerData() {
@@ -75,6 +98,19 @@ public class ArrowMetadata {
 		return arrow;
 	}
 
+    public void captureImpact() {
+        impact = arrow.getLocation().clone();
+    }
+
+    public Location getImpactLocation() {
+        return impact == null ? arrow.getLocation() : impact.clone();
+    }
+
+    public Collection<Entity> getNearbyEntities(double x, double y, double z) {
+        Location loc = getImpactLocation();
+        return loc.getWorld().getNearbyEntities(loc, x, y, z);
+    }
+
 	public int getLevel() {
 		return level;
 	}
@@ -88,7 +124,25 @@ public class ArrowMetadata {
 	 * longer than 10 minutes which is reasonable since landing an arrow should
 	 * only take about a few seconds max
 	 */
-	public boolean hasTimedOut() {
+	public boolean canContinue() {
+        if (playerData != null && playerData.getEffectSession() != effectSession) return false;
+        if (!shooter.isValid() || shooter.isDead() || !shooter.getWorld().getUID().equals(worldId))
+            return false;
+        if (shooter instanceof Player player && (!player.isOnline() || !player.hasPermission("moarbows.use." + bow.getLowerCaseId())))
+            return false;
+        return shooter instanceof Player player
+                ? MoarBows.plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.MB_BOWS)
+                : MoarBows.plugin.getWorldGuard().isFlagAllowed(shooter.getLocation(), CustomFlag.MB_BOWS);
+    }
+
+    public void configureExtraArrow(Arrow extra) {
+        extra.setWeapon(source.clone());
+        extra.setDamage(arrowDamage);
+        extra.setCritical(critical);
+        extra.setFireTicks(fireTicks);
+    }
+
+    public boolean hasTimedOut() {
 		return date + 10 * 60 * 1000 < System.currentTimeMillis();
 	}
 }

@@ -20,7 +20,9 @@ public enum VEnchantment {
 
     @Nullable
     private static Enchantment fromKey(@NotNull String key) {
-        return Enchantment.getByKey(NamespacedKey.minecraft(key));
+        return io.papermc.paper.registry.RegistryAccess.registryAccess()
+                .getRegistry(io.papermc.paper.registry.RegistryKey.ENCHANTMENT)
+                .get(NamespacedKey.minecraft(key));
     }
 
     @NotNull

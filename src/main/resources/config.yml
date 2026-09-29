@@ -1,7 +1,9 @@
-# Notifies players with the 'moarbows.update-notify' perm node when
-# they join the server if a new update is available for download.
-# Requires /reload when changed.
-update-notify: true
+# Configuration schema. Existing files are backed up before the first migration.
+config-version: 1
+
+# Reserved legacy setting. This unofficial fork does not advertise upstream updates.
+# Download testing releases from https://github.com/mrfloris/MoarBows/releases.
+update-notify: false
 
 # If set to true, players must fully pull
 # custom bows to be able to shoot arrows.

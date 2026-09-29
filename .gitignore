@@ -1,8 +1,8 @@
-
+/target/
+/.scratch/
+/.idea/
+/.DS_Store
+*.iml
 local_install.bat
-target
-.idea/
-
-
-
-
+__pycache__/
+*.pyc

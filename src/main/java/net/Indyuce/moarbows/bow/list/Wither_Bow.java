@@ -26,13 +26,15 @@ public class Wither_Bow extends MoarBow {
     }
 
     @Override
+    public boolean usesVanillaArrow() {
+        return false;
+    }
+
+    @Override
     public boolean canShoot(EntityShootBowEvent event, ArrowMetadata data) {
-        event.setCancelled(true);
-        if (!UtilityMethods.consumeAmmo(data.getShooter(), new ItemStack(Material.ARROW)))
-            return false;
 
         data.getShooter().getWorld().playSound(data.getShooter().getLocation(), Sounds.ENTITY_WITHER_SHOOT, 1, 1);
-        WitherSkull skull = data.getShooter().launchProjectile(WitherSkull.class);
+        WitherSkull skull = net.Indyuce.moarbows.MoarBows.plugin.getArrowManager().trackEffect(data.getShooter().launchProjectile(WitherSkull.class), data);
         skull.setVelocity(data.getShooter().getEyeLocation().getDirection().multiply(3.3 * event.getForce()));
         return false;
     }

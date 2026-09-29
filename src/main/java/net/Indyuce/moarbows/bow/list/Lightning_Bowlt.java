@@ -31,6 +31,8 @@ public class Lightning_Bowlt extends MoarBow {
 	@Override
 	public void whenLand(ArrowMetadata data) {
 		data.getArrow().remove();
-		data.getArrow().getWorld().strikeLightning(data.getArrow().getLocation());
+		org.bukkit.entity.LightningStrike lightning = data.getArrow().getWorld().strikeLightning(data.getImpactLocation());
+        net.Indyuce.moarbows.MoarBows.plugin.getArrowManager().trackEffect(lightning, data);
+        if (data.getShooter() instanceof org.bukkit.entity.Player player) lightning.setCausingPlayer(player);
 	}
 }

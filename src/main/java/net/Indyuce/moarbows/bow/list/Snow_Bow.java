@@ -13,7 +13,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Snowball;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
-import org.bukkit.scheduler.BukkitRunnable;
+import net.Indyuce.moarbows.bow.effect.EffectTask;
 
 public class Snow_Bow extends MoarBow {
 	public Snow_Bow() {
@@ -23,20 +23,26 @@ public class Snow_Bow extends MoarBow {
 		addModifier(new DoubleModifier("cooldown", new LinearFormula(2, 0)));
 	}
 
+    @Override
+    public boolean usesVanillaArrow() {
+        return false;
+    }
+
 	@Override
 	public boolean canShoot(EntityShootBowEvent event, ArrowMetadata data) {
-		event.setCancelled(true);
-		new BukkitRunnable() {
+		new EffectTask(data) {
 			double ti = 0;
 
-			public void run() {
-				if (ti++ > 20 * event.getForce())
+			public void tick() {
+				if (ti++ > 20 * event.getForce()) {
 					cancel();
+					return;
+					}
 
 				Location loc = data.getShooter().getEyeLocation().clone();
 				loc.getWorld().spawnParticle(VParticle.SNOWFLAKE.get(), loc, 6, .2, .2, .2, 0);
 				data.getShooter().getWorld().playSound(data.getShooter().getLocation(), Sounds.ENTITY_ARROW_SHOOT, 1, 1.5f);
-				Snowball snowball = data.getShooter().launchProjectile(Snowball.class);
+				Snowball snowball = net.Indyuce.moarbows.MoarBows.plugin.getArrowManager().trackEffect(data.getShooter().launchProjectile(Snowball.class), data);
 				loc.setPitch(loc.getPitch() + random.nextInt(3) - 1);
 				loc.setYaw(loc.getYaw() + random.nextInt(3) - 1);
 				snowball.setVelocity(loc.getDirection().multiply(3.3 * event.getForce()));

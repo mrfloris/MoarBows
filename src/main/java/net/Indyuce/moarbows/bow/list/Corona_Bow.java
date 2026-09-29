@@ -17,7 +17,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
-import org.bukkit.scheduler.BukkitRunnable;
+import net.Indyuce.moarbows.bow.effect.EffectTask;
 
 public class Corona_Bow extends MoarBow {
 	public Corona_Bow() {
@@ -43,11 +43,11 @@ public class Corona_Bow extends MoarBow {
 	@Override
 	public void whenLand(ArrowMetadata data) {
 		data.getArrow().remove();
-		data.getArrow().getWorld().playSound(data.getArrow().getLocation(), Sounds.ENTITY_FIREWORK_ROCKET_BLAST, 3, 1);
+		data.getArrow().getWorld().playSound(data.getImpactLocation(), Sounds.ENTITY_FIREWORK_ROCKET_BLAST, 3, 1);
 		new CoronaZone(data);
 	}
 
-	public class CoronaZone extends BukkitRunnable {
+	public class CoronaZone extends EffectTask {
 		private final LivingEntity shooter;
 		private final Location loc;
 		private final long duration;
@@ -56,8 +56,9 @@ public class Corona_Bow extends MoarBow {
 		private int t;
 
 		public CoronaZone(ArrowMetadata data) {
+            super(data);
 			shooter = data.getShooter();
-			loc = data.getArrow().getLocation();
+			loc = data.getImpactLocation();
 			duration = (long) (data.getDouble("duration") * 10);
 			damage = data.getDouble("damage");
 			radiusSquared = Math.pow(data.getDouble("radius"), 2);
@@ -66,9 +67,11 @@ public class Corona_Bow extends MoarBow {
 		}
 
 		@Override
-		public void run() {
-			if (t++ > duration)
-				cancel();
+		public void tick() {
+			if (t++ > duration) {
+                cancel();
+                return;
+            }
 
 			loc.getWorld().spawnParticle(VParticle.TOTEM_OF_UNDYING.get(), loc, 8, 3, .1, 3, .1);
 			loc.getWorld().spawnParticle(VParticle.REDSTONE.get(), loc, 8, 3, .1, 3, new Particle.DustOptions(Color.GREEN, 1.2f));
@@ -77,7 +80,7 @@ public class Corona_Bow extends MoarBow {
 				UtilityMethods.forEachNearbyChunkEntity(loc, entity -> {
 					if (entity instanceof LivingEntity && entity.getLocation().distanceSquared(loc) < radiusSquared
 							&& UtilityMethods.canTarget(shooter, null, entity))
-						((Damageable) entity).damage(damage / 2);
+						((Damageable) entity).damage(damage / 2, shooter);
 				});
 		}
 	}

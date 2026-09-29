@@ -27,11 +27,14 @@ public class Linear_Bow extends MoarBow {
 		addModifier(new DoubleModifier("cooldown", new LinearFormula(0, 0)), new DoubleModifier("damage", new LinearFormula(8, 3)));
 	}
 
+    @Override
+    public boolean usesVanillaArrow() {
+        return false;
+    }
+
 	@Override
 	public boolean canShoot(EntityShootBowEvent event, ArrowMetadata data) {
 		double dmg = data.getDouble("damage") * UtilityMethods.getPowerDamageMultiplier(data.getSource());
-		if (!UtilityMethods.consumeAmmo(data.getShooter(), new ItemStack(Material.ARROW)))
-			return false;
 
 		data.getShooter().getWorld().playSound(data.getShooter().getLocation(), Sounds.ENTITY_ARROW_SHOOT, 2, 0);
 		int range = (int) (56 * event.getForce());
@@ -39,15 +42,14 @@ public class Linear_Bow extends MoarBow {
 		for (double j = 0; j < range; j++) {
 			loc.add(data.getShooter().getEyeLocation().getDirection());
 			loc.getWorld().spawnParticle(VParticle.REDSTONE.get(), loc, 0, new Particle.DustOptions(Color.GRAY, 2));
-			if (loc.getBlock().getType().isSolid())
+			if (!loc.getWorld().isChunkLoaded(loc.getBlockX() >> 4, loc.getBlockZ() >> 4) || loc.getBlock().getType().isSolid())
 				break;
 
 			for (Entity entity : data.getShooter().getNearbyEntities(30, 30, 30))
 				if (UtilityMethods.canTarget(data.getShooter(), loc, entity) && entity instanceof LivingEntity) {
-					event.setCancelled(true);
 					((LivingEntity) entity).damage(dmg, data.getShooter());
 					loc.getWorld().spawnParticle(VParticle.LARGE_EXPLOSION.get(), loc, 0);
-					break;
+					return false;
 				}
 		}
 		return false;
